@@ -1,0 +1,29 @@
+{
+  "id": "mine_shaft",
+  "root": false,
+  "priority": 47,
+  "size": [6, 3],
+  "layout_anchor": "edge",
+  "tags": ["stone", "ore", "travel", "utility"],
+  "requires": ["stone", "ore"],
+  "optional_resources": ["metal", "light", "wood"],
+  "structures": [
+    {
+      "type": "tunnel",
+      "template": "mine_shaft_tunnel",
+      "offset": [0, 0, 0]
+    }
+  ],
+  "npcs": [],
+  "connections": [],
+  "events": [
+    {
+      "event_id": "spawn_mine_shaft",
+      "type": "spawn_structure",
+      "anchor_ref": "village_edge",
+      "data": {
+        "template": "mine_shaft_tunnel"
+      }
+    }
+  ]
+}

@@ -1,0 +1,144 @@
+{
+  "camp": {
+    "children": [
+      "fire",
+      "cooking_area",
+      "watchtower"
+    ],
+    "max_children": 3
+  },
+  "village": {
+    "children": [
+      "market",
+      "forge",
+      "farm",
+      "shrine"
+    ],
+    "max_children": 4
+  },
+  "market": {
+    "children": [
+      "forge",
+      "farm",
+      "market_stall",
+      "merchant_cart",
+      "food_stand"
+    ],
+    "max_children": 3
+  },
+  "forge": {
+    "children": [
+      "anvil_station",
+      "smelter",
+      "ore_pile"
+    ],
+    "max_children": 2
+  },
+  "mine": {
+    "children": [
+      "mine_shaft",
+      "ore_sorting_yard",
+      "ore_pile",
+      "smelter",
+      "anvil_station",
+      "watchtower"
+    ],
+    "max_children": 4
+  },
+  "dock": {
+    "children": [
+      "dock_mooring_post",
+      "dock_net_dryer",
+      "market_stall",
+      "merchant_cart",
+      "food_stand",
+      "road"
+    ],
+    "max_children": 4
+  },
+  "library": {
+    "children": [
+      "library_archive_stacks",
+      "library_reading_nook",
+      "shrine",
+      "wanderer_npc",
+      "road"
+    ],
+    "max_children": 3
+  },
+  "temple": {
+    "children": [
+      "temple_altar_circle",
+      "temple_prayer_pillars",
+      "shrine",
+      "fire",
+      "road"
+    ],
+    "max_children": 3
+  },
+  "arena": {
+    "children": [
+      "arena_training_ring",
+      "arena_armory_rack",
+      "watchtower",
+      "fire",
+      "road",
+      "forge"
+    ],
+    "max_children": 3
+  },
+  "inn": {
+    "children": [
+      "inn_common_room",
+      "inn_store_room",
+      "food_stand",
+      "market_stall",
+      "road"
+    ],
+    "max_children": 3
+  },
+  "workshop": {
+    "children": [
+      "workshop_tool_bench",
+      "workshop_parts_shelf",
+      "anvil_station",
+      "smelter",
+      "ore_pile",
+      "road"
+    ],
+    "max_children": 4
+  },
+  "warehouse": {
+    "children": [
+      "warehouse_loading_bay",
+      "warehouse_crate_lane",
+      "merchant_cart",
+      "ore_pile",
+      "market_stall",
+      "road"
+    ],
+    "max_children": 4
+  },
+  "trade_post": {
+    "children": [
+      "trade_post_checkpoint_gate",
+      "trade_post_caravan_camp",
+      "market_stall",
+      "merchant_cart",
+      "food_stand",
+      "road"
+    ],
+    "max_children": 4
+  },
+  "fishing_hut": {
+    "children": [
+      "fishing_drying_rack",
+      "fishing_boat_shed",
+      "food_stand",
+      "fire",
+      "merchant_cart",
+      "road"
+    ],
+    "max_children": 3
+  }
+}

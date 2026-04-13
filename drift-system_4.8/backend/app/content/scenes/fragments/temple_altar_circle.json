@@ -1,0 +1,29 @@
+{
+  "id": "temple_altar_circle",
+  "root": false,
+  "priority": 46,
+  "size": [5, 5],
+  "layout_anchor": "center",
+  "tags": ["memory", "story", "stone", "light"],
+  "requires": ["memory", "stone"],
+  "optional_resources": ["story", "light", "fire"],
+  "structures": [
+    {
+      "type": "altar",
+      "template": "temple_altar_circle",
+      "offset": [0, 0, 0]
+    }
+  ],
+  "npcs": [],
+  "connections": [],
+  "events": [
+    {
+      "event_id": "spawn_temple_altar_circle",
+      "type": "spawn_structure",
+      "anchor_ref": "village_center",
+      "data": {
+        "template": "temple_altar_circle"
+      }
+    }
+  ]
+}

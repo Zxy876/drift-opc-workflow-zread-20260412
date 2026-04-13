@@ -1,0 +1,29 @@
+{
+  "id": "workshop_tool_bench",
+  "root": false,
+  "priority": 46,
+  "size": [5, 4],
+  "layout_anchor": "edge",
+  "tags": ["craft", "metal", "wood", "utility"],
+  "requires": ["craft", "wood"],
+  "optional_resources": ["metal", "stone", "fire"],
+  "structures": [
+    {
+      "type": "tool_bench",
+      "template": "workshop_tool_bench",
+      "offset": [0, 0, 0]
+    }
+  ],
+  "npcs": [],
+  "connections": [],
+  "events": [
+    {
+      "event_id": "spawn_workshop_tool_bench",
+      "type": "spawn_structure",
+      "anchor_ref": "village_edge",
+      "data": {
+        "template": "workshop_tool_bench"
+      }
+    }
+  ]
+}

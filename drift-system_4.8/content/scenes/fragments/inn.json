@@ -1,0 +1,34 @@
+{
+  "id": "inn",
+  "root": true,
+  "priority": 61,
+  "size": [7, 6],
+  "layout_anchor": "center",
+  "tags": ["food", "trade", "shelter", "wood"],
+  "requires": ["food", "trade"],
+  "optional_resources": ["light", "water", "wood"],
+  "structures": [
+    {
+      "type": "inn",
+      "template": "inn_lodge",
+      "offset": [0, 0, 0]
+    }
+  ],
+  "npcs": [
+    {
+      "id": "innkeeper",
+      "role": "trader"
+    }
+  ],
+  "connections": ["inn_common_room", "inn_store_room", "food_stand", "market_stall", "road"],
+  "events": [
+    {
+      "event_id": "spawn_inn",
+      "type": "spawn_structure",
+      "anchor_ref": "village_center",
+      "data": {
+        "template": "inn_lodge"
+      }
+    }
+  ]
+}

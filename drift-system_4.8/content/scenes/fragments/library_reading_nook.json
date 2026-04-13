@@ -1,0 +1,29 @@
+{
+  "id": "library_reading_nook",
+  "root": false,
+  "priority": 45,
+  "size": [4, 4],
+  "layout_anchor": "center",
+  "tags": ["knowledge", "story", "light", "shelter"],
+  "requires": ["knowledge"],
+  "optional_resources": ["book", "light", "wood"],
+  "structures": [
+    {
+      "type": "reading_nook",
+      "template": "library_reading_nook",
+      "offset": [0, 0, 0]
+    }
+  ],
+  "npcs": [],
+  "connections": [],
+  "events": [
+    {
+      "event_id": "spawn_library_reading_nook",
+      "type": "spawn_structure",
+      "anchor_ref": "village_center",
+      "data": {
+        "template": "library_reading_nook"
+      }
+    }
+  ]
+}

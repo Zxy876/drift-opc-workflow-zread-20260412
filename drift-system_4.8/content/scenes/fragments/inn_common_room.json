@@ -1,0 +1,29 @@
+{
+  "id": "inn_common_room",
+  "root": false,
+  "priority": 46,
+  "size": [5, 4],
+  "layout_anchor": "center",
+  "tags": ["food", "trade", "shelter", "light"],
+  "requires": ["food"],
+  "optional_resources": ["trade", "wood", "light"],
+  "structures": [
+    {
+      "type": "common_room",
+      "template": "inn_common_room",
+      "offset": [0, 0, 0]
+    }
+  ],
+  "npcs": [],
+  "connections": [],
+  "events": [
+    {
+      "event_id": "spawn_inn_common_room",
+      "type": "spawn_structure",
+      "anchor_ref": "village_center",
+      "data": {
+        "template": "inn_common_room"
+      }
+    }
+  ]
+}

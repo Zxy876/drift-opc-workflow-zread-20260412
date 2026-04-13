@@ -1,0 +1,11 @@
+[
+  { "type": "chat", "text": "/heartmenu", "delayMs": 2500 },
+  { "type": "chat", "text": "/level flagship_tutorial", "delayMs": 4000 },
+  { "type": "chat", "text": "你好，我想看看这个世界", "delayMs": 3500 },
+  { "type": "chat", "text": "创建剧情 林中营地 在森林边", "delayMs": 4500 },
+  { "type": "chat", "text": "继续", "delayMs": 3500 },
+  { "type": "chat", "text": "给我看地图", "delayMs": 3500 },
+  { "type": "chat", "text": "/questlog", "delayMs": 3000 },
+  { "type": "chat", "text": "/recommend", "delayMs": 3000 },
+  { "type": "chat", "text": "我要退出剧情", "delayMs": 3500 }
+]

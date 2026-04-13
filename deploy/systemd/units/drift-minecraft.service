@@ -1,0 +1,16 @@
+[Unit]
+Description=Drift Minecraft Server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=__STACK_USER__
+EnvironmentFile=/etc/drift-stack.env
+WorkingDirectory=/opt/drift-stack-systemd
+ExecStart=/opt/drift-stack-systemd/bin/run-minecraft.sh
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

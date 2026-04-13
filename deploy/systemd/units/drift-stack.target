@@ -1,0 +1,20 @@
+[Unit]
+Description=Drift VM Service Stack
+Wants=drift-asyncaiflow.service
+Wants=drift-backend.service
+Wants=drift-java-worker@repository.service
+Wants=drift-java-worker@gpt.service
+Wants=drift-java-worker@git.service
+Wants=drift-python-worker@drift_trigger.service
+Wants=drift-python-worker@drift_web_search.service
+Wants=drift-python-worker@drift_plan.service
+Wants=drift-python-worker@drift_code.service
+Wants=drift-python-worker@drift_review.service
+Wants=drift-python-worker@drift_test.service
+Wants=drift-python-worker@drift_deploy.service
+Wants=drift-python-worker@drift_git_push.service
+Wants=drift-python-worker@drift_refresh.service
+After=drift-asyncaiflow.service drift-backend.service
+
+[Install]
+WantedBy=multi-user.target

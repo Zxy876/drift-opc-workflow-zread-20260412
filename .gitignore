@@ -1,0 +1,65 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Logs
+*.log
+logs/
+nohup.out
+
+# Runtime / process files
+*.pid
+*.pid.*
+dev-start.pids
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Environment / secrets
+.env
+.env.*
+*.secret
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Java build artifacts
+target/
+*.jar
+!drift-system-clean*/releases/*.jar
+
+# Node
+node_modules/
+
+# Temp / ephemeral
+/tmp/
+*.tmp
+e2e_*.py
+test_scratch*.py
+.zread/
+
+# Minecraft server runtime (drift backend server state - not source)
+drift-system-clean*/backend/server/logs/
+drift-system-clean*/backend/server/cache/
+drift-system-clean*/backend/server/libraries/
+drift-system-clean*/backend/server/banned-ips.json
+drift-system-clean*/backend/server/banned-players.json
+drift-system-clean*/backend/server/*.log
+drift-system-clean*/backend/server/config/
+
+# Drift patches (runtime-generated)
+AsyncAIFlow_4.8/tmp/drift_patches/

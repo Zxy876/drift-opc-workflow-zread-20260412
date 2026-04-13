@@ -1,0 +1,14 @@
+{
+  "name": "mc-bot-smoke",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Local Minecraft bot smoke test",
+  "license": "UNLICENSED",
+  "scripts": {
+    "smoke": "node connect_bot.js",
+    "scenario": "node run_scenario_bot.js"
+  },
+  "dependencies": {
+    "mineflayer": "^4.26.0"
+  }
+}

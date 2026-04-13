@@ -1,0 +1,8 @@
+{
+  "create:copper_sheet": "industry",
+  "create:gear": "industry",
+  "create:shaft": "industry",
+  "farmersdelight:tomato": "food",
+  "farmersdelight:rice": "food",
+  "biomesoplenty:pine_log": "forest"
+}

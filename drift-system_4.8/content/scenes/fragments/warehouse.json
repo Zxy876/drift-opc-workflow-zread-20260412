@@ -1,0 +1,34 @@
+{
+  "id": "warehouse",
+  "root": true,
+  "priority": 60,
+  "size": [8, 6],
+  "layout_anchor": "edge",
+  "tags": ["trade", "wood", "stone", "utility"],
+  "requires": ["trade", "wood"],
+  "optional_resources": ["stone", "metal", "food"],
+  "structures": [
+    {
+      "type": "warehouse",
+      "template": "warehouse_stack",
+      "offset": [0, 0, 0]
+    }
+  ],
+  "npcs": [
+    {
+      "id": "porter",
+      "role": "worker"
+    }
+  ],
+  "connections": ["warehouse_loading_bay", "warehouse_crate_lane", "merchant_cart", "ore_pile", "market_stall", "road"],
+  "events": [
+    {
+      "event_id": "spawn_warehouse",
+      "type": "spawn_structure",
+      "anchor_ref": "village_edge",
+      "data": {
+        "template": "warehouse_stack"
+      }
+    }
+  ]
+}

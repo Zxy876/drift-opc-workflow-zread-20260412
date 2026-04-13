@@ -1,0 +1,111 @@
+{
+  "name": "narrative_deep_ancient_temple",
+  "failOnUnknownCommand": true,
+  "actions": [
+    {
+      "type": "backend_post",
+      "path": "/story/{{player}}/reset",
+      "body": {
+        "clear_memory": true,
+        "clear_history": true,
+        "clear_inventory": true,
+        "clear_persisted_state": true
+      },
+      "expectJson": {
+        "status": "ok"
+      },
+      "delayMs": 800
+    },
+    {
+      "type": "backend_post",
+      "path": "/story/start",
+      "body": {
+        "player_id": "{{player}}",
+        "level_id": "flagship_01"
+      },
+      "expectJson": {
+        "status": "ok",
+        "level_id": "flagship_01"
+      },
+      "delayMs": 1200
+    },
+    {
+      "type": "backend_post",
+      "path": "/story/rule-event",
+      "body": {
+        "player_id": "{{player}}",
+        "event_type": "collect",
+        "payload": {
+          "resource": "wood",
+          "amount": 1
+        }
+      },
+      "expectJson": {
+        "status": "ok"
+      },
+      "delayMs": 600
+    },
+    {
+      "type": "backend_post",
+      "path": "/story/rule-event",
+      "body": {
+        "player_id": "{{player}}",
+        "event_type": "collect",
+        "payload": {
+          "resource": "rune",
+          "amount": 1
+        }
+      },
+      "expectJson": {
+        "status": "ok"
+      },
+      "delayMs": 600
+    },
+    {
+      "type": "backend_post",
+      "path": "/story/{{player}}/narrative/choose",
+      "body": {
+        "mode": "auto_best"
+      },
+      "expectJson": {
+        "status": "ok",
+        "current_node": "ancient_temple",
+        "narrative_decision.target_node": "ancient_temple"
+      },
+      "delayMs": 1200
+    },
+    {
+      "type": "backend_post",
+      "path": "/story/{{player}}/spawnfragment",
+      "body": {},
+      "expectJson": {
+        "status": "ok",
+        "scene_theme": "knowledge_temple",
+        "theme_override": "knowledge_temple"
+      },
+      "delayMs": 1200
+    },
+    {
+      "type": "backend_get",
+      "path": "/story/{{player}}/predict_scene",
+      "expectJson": {
+        "status": "ok",
+        "prediction.semantic_fallback_source": "narrative",
+        "prediction.predicted_root_hint": "shrine",
+        "prediction.scene_hints_theme_override": "knowledge_temple"
+      },
+      "delayMs": 1000
+    },
+    {
+      "type": "chat",
+      "text": "deep narrative scenario done",
+      "delayMs": 1200,
+      "expectAny": [
+        "你："
+      ],
+      "rejectAny": [
+        "Unknown command"
+      ]
+    }
+  ]
+}

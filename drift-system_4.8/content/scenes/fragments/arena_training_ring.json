@@ -1,0 +1,29 @@
+{
+  "id": "arena_training_ring",
+  "root": false,
+  "priority": 46,
+  "size": [6, 5],
+  "layout_anchor": "edge",
+  "tags": ["defense", "wood", "stone", "utility"],
+  "requires": ["defense"],
+  "optional_resources": ["stone", "wood", "fire"],
+  "structures": [
+    {
+      "type": "training_ring",
+      "template": "arena_training_ring",
+      "offset": [0, 0, 0]
+    }
+  ],
+  "npcs": [],
+  "connections": [],
+  "events": [
+    {
+      "event_id": "spawn_arena_training_ring",
+      "type": "spawn_structure",
+      "anchor_ref": "camp_edge",
+      "data": {
+        "template": "arena_training_ring"
+      }
+    }
+  ]
+}

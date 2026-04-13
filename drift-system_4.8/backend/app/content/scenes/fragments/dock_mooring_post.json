@@ -1,0 +1,29 @@
+{
+  "id": "dock_mooring_post",
+  "root": false,
+  "priority": 46,
+  "size": [4, 3],
+  "layout_anchor": "edge",
+  "tags": ["water", "wood", "trade", "travel"],
+  "requires": ["water", "wood"],
+  "optional_resources": ["trade", "fish", "utility"],
+  "structures": [
+    {
+      "type": "mooring",
+      "template": "dock_mooring_post",
+      "offset": [0, 0, 0]
+    }
+  ],
+  "npcs": [],
+  "connections": [],
+  "events": [
+    {
+      "event_id": "spawn_dock_mooring_post",
+      "type": "spawn_structure",
+      "anchor_ref": "village_edge",
+      "data": {
+        "template": "dock_mooring_post"
+      }
+    }
+  ]
+}

@@ -1,0 +1,153 @@
+{
+  "version": "1.0",
+  "themes": [
+    {
+      "theme_id": "wind_camp",
+      "priority": 20,
+      "keywords": ["大风", "风", "荒野", "camp", "wind"],
+      "allowed_fragments": ["camp", "fire", "cooking_area", "watchtower", "wanderer_npc", "road"],
+      "bonus_tags": {
+        "wood": 1.5,
+        "light": 1.2,
+        "fire": 1.0
+      },
+      "bonus_weight": 1.0
+    },
+    {
+      "theme_id": "market_village",
+      "priority": 18,
+      "keywords": ["市集", "村庄", "market", "village", "trade"],
+      "allowed_fragments": [
+        "village",
+        "market",
+        "forge",
+        "farm",
+        "inn",
+        "warehouse",
+        "trade_post",
+        "dock",
+        "fishing_hut",
+        "workshop",
+        "mine",
+        "mine_shaft",
+        "ore_sorting_yard",
+        "dock_mooring_post",
+        "dock_net_dryer",
+        "inn_common_room",
+        "inn_store_room",
+        "workshop_tool_bench",
+        "workshop_parts_shelf",
+        "warehouse_loading_bay",
+        "warehouse_crate_lane",
+        "trade_post_checkpoint_gate",
+        "trade_post_caravan_camp",
+        "fishing_drying_rack",
+        "fishing_boat_shed",
+        "shrine",
+        "market_stall",
+        "merchant_cart",
+        "food_stand",
+        "anvil_station",
+        "smelter",
+        "ore_pile"
+      ],
+      "bonus_tags": {
+        "trade": 1.6,
+        "food": 1.0,
+        "wood": 0.8
+      },
+      "bonus_weight": 1.0
+    },
+    {
+      "theme_id": "memory_shrine",
+      "priority": 16,
+      "keywords": ["记忆", "古老", "静谧", "memory", "ancient"],
+      "allowed_fragments": ["shrine", "village", "camp"],
+      "bonus_tags": {
+        "memory": 1.4,
+        "stone": 1.0,
+        "light": 0.8
+      },
+      "bonus_weight": 1.0
+    },
+    {
+      "theme_id": "harbor_trade",
+      "priority": 17,
+      "keywords": ["港", "码头", "渔", "dock", "harbor", "fishing"],
+      "allowed_fragments": [
+        "dock",
+        "fishing_hut",
+        "trade_post",
+        "warehouse",
+        "dock_mooring_post",
+        "dock_net_dryer",
+        "fishing_drying_rack",
+        "fishing_boat_shed",
+        "warehouse_loading_bay",
+        "trade_post_checkpoint_gate",
+        "trade_post_caravan_camp",
+        "market",
+        "market_stall",
+        "merchant_cart",
+        "food_stand",
+        "road"
+      ],
+      "bonus_tags": {
+        "water": 1.6,
+        "fish": 1.4,
+        "trade": 1.2
+      },
+      "bonus_weight": 1.0
+    },
+    {
+      "theme_id": "industry_mine",
+      "priority": 17,
+      "keywords": ["矿", "锻造", "工坊", "mine", "forge", "workshop", "industry"],
+      "allowed_fragments": [
+        "mine",
+        "forge",
+        "workshop",
+        "warehouse",
+        "mine_shaft",
+        "ore_sorting_yard",
+        "workshop_tool_bench",
+        "workshop_parts_shelf",
+        "warehouse_loading_bay",
+        "warehouse_crate_lane",
+        "arena_armory_rack",
+        "ore_pile",
+        "smelter",
+        "anvil_station",
+        "road"
+      ],
+      "bonus_tags": {
+        "ore": 1.6,
+        "metal": 1.4,
+        "craft": 1.3
+      },
+      "bonus_weight": 1.0
+    },
+    {
+      "theme_id": "knowledge_temple",
+      "priority": 15,
+      "keywords": ["图书", "知识", "神殿", "library", "temple", "knowledge"],
+      "allowed_fragments": [
+        "library",
+        "temple",
+        "library_archive_stacks",
+        "library_reading_nook",
+        "temple_altar_circle",
+        "temple_prayer_pillars",
+        "shrine",
+        "wanderer_npc",
+        "road"
+      ],
+      "bonus_tags": {
+        "knowledge": 1.5,
+        "story": 1.3,
+        "memory": 1.2
+      },
+      "bonus_weight": 1.0
+    }
+  ]
+}

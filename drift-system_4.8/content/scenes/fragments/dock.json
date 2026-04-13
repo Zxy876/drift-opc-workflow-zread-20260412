@@ -1,0 +1,34 @@
+{
+  "id": "dock",
+  "root": true,
+  "priority": 63,
+  "size": [9, 5],
+  "layout_anchor": "edge",
+  "tags": ["water", "trade", "wood", "fish"],
+  "requires": ["water", "wood"],
+  "optional_resources": ["food", "trade", "stone"],
+  "structures": [
+    {
+      "type": "dock",
+      "template": "dock_pier",
+      "offset": [0, 0, 0]
+    }
+  ],
+  "npcs": [
+    {
+      "id": "fisher",
+      "role": "trader"
+    }
+  ],
+  "connections": ["dock_mooring_post", "dock_net_dryer", "market_stall", "merchant_cart", "food_stand", "road"],
+  "events": [
+    {
+      "event_id": "spawn_dock",
+      "type": "spawn_structure",
+      "anchor_ref": "village_edge",
+      "data": {
+        "template": "dock_pier"
+      }
+    }
+  ]
+}

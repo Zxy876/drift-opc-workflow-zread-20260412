@@ -1,0 +1,29 @@
+{
+  "id": "ore_pile",
+  "root": false,
+  "priority": 44,
+  "size": [4, 3],
+  "layout_anchor": "edge",
+  "tags": ["stone", "metal", "craft"],
+  "requires": ["stone"],
+  "optional_resources": ["metal", "trade"],
+  "structures": [
+    {
+      "type": "ore",
+      "template": "ore_pile",
+      "offset": [0, 0, 0]
+    }
+  ],
+  "npcs": [],
+  "connections": [],
+  "events": [
+    {
+      "event_id": "spawn_ore_pile",
+      "type": "spawn_structure",
+      "anchor_ref": "village_edge",
+      "data": {
+        "template": "ore_pile"
+      }
+    }
+  ]
+}

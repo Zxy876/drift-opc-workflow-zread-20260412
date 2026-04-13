@@ -1,0 +1,47 @@
+{
+  "version": "p8a_v1",
+  "entry_node": "forest_intro",
+  "nodes": {
+    "forest_intro": {
+      "arc": "main",
+      "next": ["camp_life", "ancient_temple"],
+      "requires": ["scene:camp"],
+      "scene_hints": {
+        "preferred_semantics": ["camp", "warm"],
+        "fallback_root": "camp",
+        "theme_override": "camp"
+      }
+    },
+    "camp_life": {
+      "arc": "main",
+      "next": ["ancient_temple", "village_arrival"],
+      "requires": ["scene:village"],
+      "scene_hints": {
+        "preferred_semantics": ["village", "trade"],
+        "fallback_root": "village",
+        "theme_override": "village"
+      }
+    },
+    "ancient_temple": {
+      "arc": "main",
+      "next": ["village_arrival"],
+      "requires": ["collect:wood", "collect:rune"],
+      "scene_hints": {
+        "preferred_semantics": ["temple", "ancient", "stone"],
+        "required_semantics": ["temple"],
+        "fallback_root": "shrine",
+        "theme_override": "knowledge_temple"
+      }
+    },
+    "village_arrival": {
+      "arc": "main",
+      "next": [],
+      "requires": ["scene:forge"],
+      "scene_hints": {
+        "preferred_semantics": ["forge", "village"],
+        "fallback_root": "forge",
+        "theme_override": "forge"
+      }
+    }
+  }
+}

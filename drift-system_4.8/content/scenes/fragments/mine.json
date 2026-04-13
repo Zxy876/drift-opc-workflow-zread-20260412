@@ -1,0 +1,34 @@
+{
+  "id": "mine",
+  "root": true,
+  "priority": 66,
+  "size": [8, 6],
+  "layout_anchor": "edge",
+  "tags": ["stone", "metal", "ore", "craft"],
+  "requires": ["stone", "ore"],
+  "optional_resources": ["metal", "fire", "wood"],
+  "structures": [
+    {
+      "type": "mine",
+      "template": "mine_core",
+      "offset": [0, 0, 0]
+    }
+  ],
+  "npcs": [
+    {
+      "id": "miner",
+      "role": "worker"
+    }
+  ],
+  "connections": ["mine_shaft", "ore_sorting_yard", "ore_pile", "smelter", "anvil_station", "watchtower"],
+  "events": [
+    {
+      "event_id": "spawn_mine",
+      "type": "spawn_structure",
+      "anchor_ref": "village_edge",
+      "data": {
+        "template": "mine_core"
+      }
+    }
+  ]
+}

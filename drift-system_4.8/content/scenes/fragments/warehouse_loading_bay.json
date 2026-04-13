@@ -1,0 +1,29 @@
+{
+  "id": "warehouse_loading_bay",
+  "root": false,
+  "priority": 46,
+  "size": [5, 4],
+  "layout_anchor": "edge",
+  "tags": ["trade", "utility", "wood", "travel"],
+  "requires": ["trade", "wood"],
+  "optional_resources": ["stone", "water", "food"],
+  "structures": [
+    {
+      "type": "loading_bay",
+      "template": "warehouse_loading_bay",
+      "offset": [0, 0, 0]
+    }
+  ],
+  "npcs": [],
+  "connections": [],
+  "events": [
+    {
+      "event_id": "spawn_warehouse_loading_bay",
+      "type": "spawn_structure",
+      "anchor_ref": "village_edge",
+      "data": {
+        "template": "warehouse_loading_bay"
+      }
+    }
+  ]
+}

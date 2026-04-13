@@ -1,0 +1,29 @@
+{
+  "id": "dock_net_dryer",
+  "root": false,
+  "priority": 45,
+  "size": [4, 3],
+  "layout_anchor": "edge",
+  "tags": ["fish", "food", "water", "wood"],
+  "requires": ["fish"],
+  "optional_resources": ["food", "water", "trade"],
+  "structures": [
+    {
+      "type": "drying_rack",
+      "template": "dock_net_dryer",
+      "offset": [0, 0, 0]
+    }
+  ],
+  "npcs": [],
+  "connections": [],
+  "events": [
+    {
+      "event_id": "spawn_dock_net_dryer",
+      "type": "spawn_structure",
+      "anchor_ref": "village_edge",
+      "data": {
+        "template": "dock_net_dryer"
+      }
+    }
+  ]
+}

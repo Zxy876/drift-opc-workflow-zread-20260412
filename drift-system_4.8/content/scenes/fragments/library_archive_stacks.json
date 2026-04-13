@@ -1,0 +1,29 @@
+{
+  "id": "library_archive_stacks",
+  "root": false,
+  "priority": 47,
+  "size": [5, 4],
+  "layout_anchor": "center",
+  "tags": ["knowledge", "book", "story", "memory"],
+  "requires": ["knowledge", "book"],
+  "optional_resources": ["light", "wood", "story"],
+  "structures": [
+    {
+      "type": "archive",
+      "template": "library_archive_stacks",
+      "offset": [0, 0, 0]
+    }
+  ],
+  "npcs": [],
+  "connections": [],
+  "events": [
+    {
+      "event_id": "spawn_library_archive_stacks",
+      "type": "spawn_structure",
+      "anchor_ref": "village_center",
+      "data": {
+        "template": "library_archive_stacks"
+      }
+    }
+  ]
+}

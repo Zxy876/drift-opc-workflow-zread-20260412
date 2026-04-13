@@ -1,0 +1,29 @@
+{
+  "id": "fishing_boat_shed",
+  "root": false,
+  "priority": 45,
+  "size": [5, 4],
+  "layout_anchor": "edge",
+  "tags": ["water", "travel", "wood", "utility"],
+  "requires": ["water", "wood"],
+  "optional_resources": ["trade", "fish", "food"],
+  "structures": [
+    {
+      "type": "boat_shed",
+      "template": "fishing_boat_shed",
+      "offset": [0, 0, 0]
+    }
+  ],
+  "npcs": [],
+  "connections": [],
+  "events": [
+    {
+      "event_id": "spawn_fishing_boat_shed",
+      "type": "spawn_structure",
+      "anchor_ref": "camp_edge",
+      "data": {
+        "template": "fishing_boat_shed"
+      }
+    }
+  ]
+}

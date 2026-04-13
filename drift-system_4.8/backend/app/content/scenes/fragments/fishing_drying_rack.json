@@ -1,0 +1,29 @@
+{
+  "id": "fishing_drying_rack",
+  "root": false,
+  "priority": 46,
+  "size": [4, 3],
+  "layout_anchor": "edge",
+  "tags": ["fish", "food", "water", "utility"],
+  "requires": ["fish", "water"],
+  "optional_resources": ["food", "wood", "trade"],
+  "structures": [
+    {
+      "type": "drying_rack",
+      "template": "fishing_drying_rack",
+      "offset": [0, 0, 0]
+    }
+  ],
+  "npcs": [],
+  "connections": [],
+  "events": [
+    {
+      "event_id": "spawn_fishing_drying_rack",
+      "type": "spawn_structure",
+      "anchor_ref": "camp_edge",
+      "data": {
+        "template": "fishing_drying_rack"
+      }
+    }
+  ]
+}

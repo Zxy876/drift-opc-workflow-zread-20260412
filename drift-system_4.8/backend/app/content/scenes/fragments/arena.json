@@ -1,0 +1,34 @@
+{
+  "id": "arena",
+  "root": true,
+  "priority": 58,
+  "size": [9, 7],
+  "layout_anchor": "edge",
+  "tags": ["defense", "stone", "metal", "height"],
+  "requires": ["defense", "stone"],
+  "optional_resources": ["fire", "trade", "wood"],
+  "structures": [
+    {
+      "type": "arena",
+      "template": "arena_ring",
+      "offset": [0, 0, 0]
+    }
+  ],
+  "npcs": [
+    {
+      "id": "guard",
+      "role": "defender"
+    }
+  ],
+  "connections": ["arena_training_ring", "arena_armory_rack", "watchtower", "fire", "road", "forge"],
+  "events": [
+    {
+      "event_id": "spawn_arena",
+      "type": "spawn_structure",
+      "anchor_ref": "camp_edge",
+      "data": {
+        "template": "arena_ring"
+      }
+    }
+  ]
+}

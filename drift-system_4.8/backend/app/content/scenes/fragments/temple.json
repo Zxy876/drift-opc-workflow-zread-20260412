@@ -1,0 +1,34 @@
+{
+  "id": "temple",
+  "root": true,
+  "priority": 59,
+  "size": [8, 7],
+  "layout_anchor": "center",
+  "tags": ["memory", "story", "stone", "light"],
+  "requires": ["stone", "memory"],
+  "optional_resources": ["story", "light", "water"],
+  "structures": [
+    {
+      "type": "temple",
+      "template": "temple_court",
+      "offset": [0, 0, 0]
+    }
+  ],
+  "npcs": [
+    {
+      "id": "priest",
+      "role": "guide"
+    }
+  ],
+  "connections": ["temple_altar_circle", "temple_prayer_pillars", "shrine", "fire", "road"],
+  "events": [
+    {
+      "event_id": "spawn_temple",
+      "type": "spawn_structure",
+      "anchor_ref": "village_center",
+      "data": {
+        "template": "temple_court"
+      }
+    }
+  ]
+}

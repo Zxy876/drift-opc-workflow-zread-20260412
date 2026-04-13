@@ -1,0 +1,29 @@
+{
+  "id": "trade_post_caravan_camp",
+  "root": false,
+  "priority": 45,
+  "size": [6, 4],
+  "layout_anchor": "edge",
+  "tags": ["trade", "travel", "food", "shelter"],
+  "requires": ["trade"],
+  "optional_resources": ["food", "wood", "water"],
+  "structures": [
+    {
+      "type": "caravan_camp",
+      "template": "trade_post_caravan_camp",
+      "offset": [0, 0, 0]
+    }
+  ],
+  "npcs": [],
+  "connections": [],
+  "events": [
+    {
+      "event_id": "spawn_trade_post_caravan_camp",
+      "type": "spawn_structure",
+      "anchor_ref": "village_center",
+      "data": {
+        "template": "trade_post_caravan_camp"
+      }
+    }
+  ]
+}

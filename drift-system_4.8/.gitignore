@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+pycache/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.log
+.venv/
+venv/
+ENV/
+env/
+.pytest_cache/
+
+# Node
+node_modules/
+.env
+
+# Minecraft/Drift runtime
+world/
+logs/
+server/
+*.pid
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Data (runtime generated)
+data/
+*.db
+cache/
+
+# Build artifacts
+target/
+build/
+*.class
+*.jar
+!releases/drift-plugin-v1.0.jar
+
+# Temporary files
+*.tmp
+*.bak
+*.cache

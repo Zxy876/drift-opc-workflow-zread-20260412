@@ -1,0 +1,34 @@
+{
+  "id": "market_stall",
+  "root": false,
+  "priority": 45,
+  "size": [5, 4],
+  "layout_anchor": "edge",
+  "tags": ["trade", "food", "npc", "wood"],
+  "requires": ["trade"],
+  "optional_resources": ["food", "wood"],
+  "structures": [
+    {
+      "type": "stall",
+      "template": "market_stalls",
+      "offset": [1, 0, 0]
+    }
+  ],
+  "npcs": [
+    {
+      "id": "stall_vendor",
+      "role": "trader"
+    }
+  ],
+  "connections": [],
+  "events": [
+    {
+      "event_id": "spawn_market_stall",
+      "type": "spawn_structure",
+      "anchor_ref": "village_center",
+      "data": {
+        "template": "market_stalls"
+      }
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "name": "god_view_audit_strict_join",
+  "failOnUnknownCommand": true,
+  "actions": [
+    {
+      "type": "chat",
+      "text": "/heartmenu",
+      "delayMs": 2500,
+      "expectAny": ["心悦宇宙", "菜单"],
+      "rejectAny": ["Unknown command"]
+    },
+    {
+      "type": "chat",
+      "text": "/levels",
+      "delayMs": 2500,
+      "expectAny": ["心悦宇宙", "levels"],
+      "rejectAny": ["Unknown command"]
+    },
+    {
+      "type": "chat",
+      "text": "/level flagship_01",
+      "delayMs": 5000,
+      "expectAny": ["正在为", "加载关卡"],
+      "rejectAny": ["Unknown command"]
+    },
+    {
+      "type": "chat",
+      "text": "/drift status",
+      "delayMs": 3000,
+      "expectAny": ["你的状态", "当前关卡"],
+      "rejectAny": ["Unknown command"]
+    },
+    {
+      "type": "chat",
+      "text": "你好，我想继续冒险",
+      "delayMs": 3500,
+      "expectAny": ["你：", "继续当前教学提示"],
+      "rejectAny": ["Unknown command"]
+    }
+  ]
+}

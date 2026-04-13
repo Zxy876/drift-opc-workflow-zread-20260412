@@ -1,0 +1,16 @@
+[Unit]
+Description=Drift Python Worker (%i)
+After=drift-asyncaiflow.service drift-backend.service
+Wants=drift-asyncaiflow.service drift-backend.service
+
+[Service]
+Type=simple
+User=__STACK_USER__
+EnvironmentFile=/etc/drift-stack.env
+WorkingDirectory=/opt/drift-stack-systemd
+ExecStart=/opt/drift-stack-systemd/bin/run-python-worker.sh %i
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

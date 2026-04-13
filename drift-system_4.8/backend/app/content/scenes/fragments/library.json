@@ -1,0 +1,34 @@
+{
+  "id": "library",
+  "root": true,
+  "priority": 60,
+  "size": [7, 6],
+  "layout_anchor": "center",
+  "tags": ["story", "memory", "knowledge", "wood"],
+  "requires": ["story", "wood"],
+  "optional_resources": ["light", "trade", "memory"],
+  "structures": [
+    {
+      "type": "library",
+      "template": "library_hall",
+      "offset": [0, 0, 0]
+    }
+  ],
+  "npcs": [
+    {
+      "id": "librarian",
+      "role": "guide"
+    }
+  ],
+  "connections": ["library_archive_stacks", "library_reading_nook", "shrine", "wanderer_npc", "road"],
+  "events": [
+    {
+      "event_id": "spawn_library",
+      "type": "spawn_structure",
+      "anchor_ref": "village_center",
+      "data": {
+        "template": "library_hall"
+      }
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "id": "workshop",
+  "root": true,
+  "priority": 62,
+  "size": [7, 6],
+  "layout_anchor": "edge",
+  "tags": ["craft", "wood", "metal", "utility"],
+  "requires": ["wood", "metal"],
+  "optional_resources": ["stone", "fire", "trade"],
+  "structures": [
+    {
+      "type": "workshop",
+      "template": "workshop_floor",
+      "offset": [0, 0, 0]
+    }
+  ],
+  "npcs": [
+    {
+      "id": "artisan",
+      "role": "worker"
+    }
+  ],
+  "connections": ["workshop_tool_bench", "workshop_parts_shelf", "anvil_station", "smelter", "ore_pile", "road"],
+  "events": [
+    {
+      "event_id": "spawn_workshop",
+      "type": "spawn_structure",
+      "anchor_ref": "village_edge",
+      "data": {
+        "template": "workshop_floor"
+      }
+    }
+  ]
+}

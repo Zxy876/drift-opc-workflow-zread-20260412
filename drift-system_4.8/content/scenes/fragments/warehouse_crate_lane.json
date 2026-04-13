@@ -1,0 +1,29 @@
+{
+  "id": "warehouse_crate_lane",
+  "root": false,
+  "priority": 45,
+  "size": [5, 3],
+  "layout_anchor": "edge",
+  "tags": ["trade", "utility", "wood", "stone"],
+  "requires": ["trade"],
+  "optional_resources": ["wood", "stone", "metal"],
+  "structures": [
+    {
+      "type": "crate_lane",
+      "template": "warehouse_crate_lane",
+      "offset": [0, 0, 0]
+    }
+  ],
+  "npcs": [],
+  "connections": [],
+  "events": [
+    {
+      "event_id": "spawn_warehouse_crate_lane",
+      "type": "spawn_structure",
+      "anchor_ref": "village_edge",
+      "data": {
+        "template": "warehouse_crate_lane"
+      }
+    }
+  ]
+}

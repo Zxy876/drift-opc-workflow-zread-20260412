@@ -1,0 +1,29 @@
+{
+  "id": "workshop_parts_shelf",
+  "root": false,
+  "priority": 45,
+  "size": [4, 3],
+  "layout_anchor": "edge",
+  "tags": ["craft", "trade", "utility", "wood"],
+  "requires": ["craft"],
+  "optional_resources": ["metal", "trade", "wood"],
+  "structures": [
+    {
+      "type": "parts_shelf",
+      "template": "workshop_parts_shelf",
+      "offset": [0, 0, 0]
+    }
+  ],
+  "npcs": [],
+  "connections": [],
+  "events": [
+    {
+      "event_id": "spawn_workshop_parts_shelf",
+      "type": "spawn_structure",
+      "anchor_ref": "village_edge",
+      "data": {
+        "template": "workshop_parts_shelf"
+      }
+    }
+  ]
+}

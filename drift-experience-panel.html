@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drift Experience Control Panel</title>
+<style>
+/* ─── Reset & Base ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:       #0d1117;
+  --bg2:      #161b22;
+  --bg3:      #1c2128;
+  --border:   #30363d;
+  --border2:  #21262d;
+  --text:     #c9d1d9;
+  --text-dim: #8b949e;
+  --blue:     #58a6ff;
+  --green:    #3fb950;
+  --red:      #f85149;
+  --yellow:   #d29922;
+  --purple:   #a371f7;
+  --cyan:     #39d0d8;
+  --orange:   #ffa657;
+  --radius:   8px;
+}
+body {
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.5;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── Scrollbar ────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ─── Header ───────────────────────────────────────────────────── */
+.header {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  gap: 12px;
+}
+.header-left { display: flex; align-items: center; gap: 12px; }
+.header h1 { font-size: 15px; color: var(--blue); font-weight: 600; letter-spacing: 0.3px; }
+.header .sub { font-size: 11px; color: var(--text-dim); }
+.server-row { display: flex; align-items: center; gap: 10px; flex: 1; max-width: 380px; }
+.server-row input {
+  flex: 1;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 5px 10px;
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-size: 12px;
+}
+.server-row input:focus { outline: none; border-color: var(--blue); }
+.status-pill {
+  display: flex; align-items: center; gap: 5px;
+  background: var(--bg3); border: 1px solid var(--border);
+  padding: 4px 10px; border-radius: 20px; font-size: 11px;
+  color: var(--text-dim); white-space: nowrap;
+  cursor: pointer; transition: border-color 0.2s;
+}
+.status-pill:hover { border-color: var(--blue); }
+.dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.dot-green { background: var(--green); box-shadow: 0 0 6px var(--green); animation: pulse 2s infinite; }
+.dot-red   { background: var(--red); }
+.dot-gray  { background: #555; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+.btn-demo {
+  background: linear-gradient(135deg, #1f6feb, #388bfd);
+  border: none; color: #fff;
+  padding: 6px 16px; border-radius: var(--radius);
+  font-family: inherit; font-size: 12px; font-weight: 600;
+  cursor: pointer; white-space: nowrap; transition: opacity 0.2s;
+}
+.btn-demo:hover { opacity: 0.85; }
+.btn-demo:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ─── Layout: 6 panels in a 3×2 grid ──────────────────────────── */
+.panels {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 0;
+  overflow: hidden;
+}
+.panel {
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+.panel:nth-child(3n) { border-right: none; }
+.panel:nth-last-child(-n+3) { border-bottom: none; }
+
+.panel-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 14px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border2);
+  flex-shrink: 0;
+}
+.panel-title {
+  font-size: 10px; text-transform: uppercase;
+  letter-spacing: 1.2px; color: var(--text-dim); font-weight: 600;
+}
+.panel-badge {
+  font-size: 10px; padding: 2px 7px;
+  border-radius: 10px; background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+}
+.panel-body { flex: 1; padding: 12px 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+
+/* ─── Form Controls ────────────────────────────────────────────── */
+label { font-size: 11px; color: var(--text-dim); display: block; margin-bottom: 3px; }
+textarea, input[type="text"] {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 7px 10px;
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-size: 12px;
+  resize: none;
+  transition: border-color 0.2s;
+}
+textarea:focus, input[type="text"]:focus { outline: none; border-color: var(--blue); }
+textarea { min-height: 80px; }
+
+.row { display: flex; gap: 8px; }
+.row > * { flex: 1; }
+
+/* ─── Buttons ──────────────────────────────────────────────────── */
+.btn {
+  width: 100%; padding: 7px 12px;
+  border-radius: var(--radius);
+  font-family: inherit; font-size: 12px; font-weight: 500;
+  cursor: pointer; transition: opacity 0.15s, transform 0.1s;
+  border: 1px solid transparent;
+}
+.btn:hover { opacity: 0.85; transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+.btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+.btn-blue   { background: #1f6feb; color: #fff; }
+.btn-green  { background: #238636; color: #fff; }
+.btn-purple { background: #6e40c9; color: #fff; }
+.btn-orange { background: #9e4c0a; border-color: var(--orange); color: var(--orange); background: #9e4c0a22; }
+.btn-cyan   { background: #0e4959; border-color: var(--cyan); color: var(--cyan); }
+.btn-red    { background: #4c0a0a; border-color: var(--red); color: var(--red); }
+.btn-yellow { background: #3d2a00; border-color: var(--yellow); color: var(--yellow); }
+.btn-sm { padding: 5px 10px; font-size: 11px; width: auto; }
+
+/* ─── Score Bar ────────────────────────────────────────────────── */
+.score-wrap { display: flex; align-items: center; gap: 8px; }
+.score-bar { flex: 1; height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+.score-fill { height: 100%; border-radius: 3px; transition: width 0.6s, background 0.6s; }
+.score-label { font-size: 12px; font-weight: 600; white-space: nowrap; min-width: 38px; text-align: right; }
+
+/* ─── Results Display ──────────────────────────────────────────── */
+.result-block {
+  background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: var(--radius); padding: 10px 12px;
+  font-size: 11px; flex: 1;
+}
+.result-block.empty { color: var(--text-dim); font-style: italic; }
+.kv { display: flex; margin-bottom: 4px; gap: 8px; }
+.k { color: var(--text-dim); white-space: nowrap; }
+.v { color: var(--text); word-break: break-all; }
+.v.green { color: var(--green); font-weight: 600; }
+.v.red   { color: var(--red); font-weight: 600; }
+.v.blue  { color: var(--blue); }
+.v.yellow{ color: var(--yellow); }
+.v.purple{ color: var(--purple); }
+
+/* trigger chips */
+.chip-list { display: flex; flex-wrap: wrap; gap: 5px; }
+.chip {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 12px; padding: 2px 9px; font-size: 10px;
+}
+.chip.item_collect { border-color: var(--green); color: var(--green); }
+.chip.proximity    { border-color: var(--cyan);  color: var(--cyan); }
+.chip.timer        { border-color: var(--yellow);color: var(--yellow); }
+.chip.npc_talk     { border-color: var(--purple);color: var(--purple); }
+.chip.unknown      { border-color: var(--text-dim); color: var(--text-dim); }
+
+/* issues list */
+.issue-item { color: var(--red); font-size: 11px; padding: 2px 0; }
+.issue-item::before { content: "✗ "; }
+
+/* ─── Runtime buttons ──────────────────────────────────────────── */
+.ev-btns { display: flex; flex-direction: column; gap: 6px; }
+
+/* ─── State display ────────────────────────────────────────────── */
+.status-badge {
+  display: inline-block; padding: 3px 12px;
+  border-radius: 12px; font-size: 12px; font-weight: 700;
+  border: 1px solid var(--border);
+}
+.status-playing { background: #16304a22; border-color: var(--blue);   color: var(--blue); }
+.status-win     { background: #12320c; border-color: var(--green); color: var(--green); text-shadow: 0 0 8px var(--green); animation: winpulse 1s ease; }
+.status-lose    { background: #32120c; border-color: var(--red);   color: var(--red); }
+.status-idle    { background: transparent; color: var(--text-dim); }
+@keyframes winpulse { 0%{transform:scale(1)} 40%{transform:scale(1.12)} 100%{transform:scale(1)} }
+
+.counter-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.counter-box {
+  flex: 1; min-width: 60px;
+  background: var(--bg); border: 1px solid var(--border2);
+  border-radius: var(--radius); padding: 8px 12px; text-align: center;
+}
+.counter-box .cnt-val { font-size: 22px; font-weight: 700; color: var(--blue); line-height: 1; }
+.counter-box .cnt-lbl { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+
+/* ─── Timeline ─────────────────────────────────────────────────── */
+.tl-entry {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 6px 0; border-bottom: 1px solid var(--border2);
+}
+.tl-entry:last-child { border-bottom: none; }
+.tl-dot   { width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+.tl-content { flex: 1; }
+.tl-event { font-size: 12px; color: var(--text); }
+.tl-meta  { font-size: 10px; color: var(--text-dim); }
+.tl-win   { color: var(--green); font-weight: 700; }
+.tl-none  { color: var(--text-dim); }
+
+/* ─── Debug ────────────────────────────────────────────────────── */
+.diff-row { display: flex; gap: 6px; font-size: 11px; }
+.diff-old { color: var(--red); }
+.diff-arrow { color: var(--text-dim); }
+.diff-new { color: var(--green); }
+
+/* ─── Spinner ──────────────────────────────────────────────────── */
+.spinner {
+  display: inline-block; width: 10px; height: 10px;
+  border: 2px solid transparent; border-top-color: var(--blue);
+  border-radius: 50%; animation: spin 0.6s linear infinite;
+  vertical-align: middle; margin-left: 5px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── Toast ────────────────────────────────────────────────────── */
+#toast {
+  position: fixed; bottom: 20px; right: 20px;
+  background: var(--bg2); border: 1px solid var(--border);
+  color: var(--text); padding: 10px 16px; border-radius: var(--radius);
+  font-size: 12px; pointer-events: none;
+  opacity: 0; transition: opacity 0.25s;
+  z-index: 9999; max-width: 300px;
+}
+#toast.show { opacity: 1; }
+#toast.ok   { border-color: var(--green); color: var(--green); }
+#toast.err  { border-color: var(--red);   color: var(--red); }
+
+/* ─── Workflow Stepper ───────────────────────────────────── */
+.workflow-bar {
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px; padding: 5px 20px;
+  background: var(--bg2); border-bottom: 1px solid var(--border2);
+  flex-shrink: 0;
+}
+.wf-step {
+  display: flex; align-items: center; gap: 5px;
+  padding: 3px 14px; border-radius: 20px;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.3px;
+  background: var(--bg3); border: 1px solid var(--border2);
+  color: var(--text-dim); transition: all 0.3s;
+  cursor: default; white-space: nowrap;
+}
+.wf-step.done  { background: #0e2210; border-color: var(--green); color: var(--green); }
+.wf-step.active { background: #0d1f33; border-color: var(--blue); color: var(--blue); }
+.wf-arrow { color: var(--border); font-size: 13px; }
+.btn-publish {
+  width: 100%; font-size: 13px; font-weight: 700;
+  padding: 9px 0; letter-spacing: 0.3px;
+  background: linear-gradient(135deg, #238636, #2ea043) !important;
+  border-color: #2ea043 !important;
+}
+.mc-feedback-row {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; padding: 4px 0; color: var(--text-dim);
+}
+.mc-dot { width: 6px; height: 6px; border-radius: 50%; background: #555; flex-shrink: 0; }
+.mc-dot.live { background: var(--green); box-shadow: 0 0 5px var(--green); animation: pulse 2s infinite; }
+</style>
+</head>
+<body>
+
+<!-- ─── Header ──────────────────────────────────────────────────── -->
+<div class="header">
+  <div class="header-left">
+    <div>
+      <div class="header h1" style="font-size:15px;color:var(--blue);font-weight:700;">⬡ Drift Experience Control Panel</div>
+      <div class="sub">Design → Validate → Inject → Play → Observe</div>
+    </div>
+  </div>
+  <div class="server-row">
+    <input type="text" id="baseUrl" value="http://35.201.132.58:8000" placeholder="Backend URL" />
+    <div class="status-pill" id="statusPill" onclick="checkHealth()" title="点击检测连接">
+      <span class="dot dot-gray" id="statusDot"></span>
+      <span id="statusText">未连接</span>
+    </div>
+  </div>
+  <button class="btn-demo" id="btnFullDemo" onclick="runFullDemo()">▶ Run Full Demo</button>
+</div>
+
+<!-- ─── Workflow Stepper ─────────────────────────────────────────── -->
+<div class="workflow-bar">
+  <div class="wf-step active" id="wfStep1">✏ 设计</div>
+  <div class="wf-arrow">→</div>
+  <div class="wf-step" id="wfStep2">📊 模拟</div>
+  <div class="wf-arrow">→</div>
+  <div class="wf-step" id="wfStep3">🚀 发布</div>
+  <div class="wf-arrow">→</div>
+  <div class="wf-step" id="wfStep4">🎮 实体验</div>
+</div>
+
+<!-- ─── 6 Panels ─────────────────────────────────────────────────── -->
+<div class="panels">
+
+  <!-- ① Design Panel -->
+  <div class="panel">
+    <div class="panel-head">
+      <span class="panel-title">① Design</span>
+      <span class="panel-badge" id="designBadge">—</span>
+    </div>
+    <div class="panel-body">
+      <div>
+        <label>设计描述（自然语言）</label>
+        <textarea id="designText" rows="5" placeholder="玩家需要收集三块宝石才能解锁神庙大门。靠近祭坛可以获得奖励。被守卫发现则失败。限时60秒完成任务。"></textarea>
+      </div>
+      <div class="row">
+        <button class="btn btn-blue" onclick="doPreview()">🔍 Preview</button>
+        <button class="btn btn-purple" onclick="doValidate()">✔ Validate</button>
+        <button class="btn btn-orange" onclick="doSimulate()" id="btnSimulate">▶ Evaluate Level</button>
+        <button class="btn btn-cyan" onclick="doOptimize()" id="btnOptimize">🧠 Auto Balance</button>
+      </div>
+
+      <!-- Simulation result -->
+      <div id="simArea" style="display:none">
+        <label>Simulation</label>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <div style="flex:1;height:10px;background:#21262d;border-radius:5px;overflow:hidden">
+            <div id="simWinBar" style="height:100%;width:0%;background:var(--green);transition:width .4s"></div>
+          </div>
+          <span id="simWinLabel" style="font-size:12px;min-width:38px;text-align:right">—</span>
+          <span id="simDiffBadge" style="font-size:10px;padding:1px 6px;border-radius:9px;background:#1f2937;border:1px solid #444">—</span>
+        </div>
+        <div id="simInsights" style="font-size:11px;color:var(--muted);line-height:1.6"></div>
+      </div>
+
+      <!-- Auto Balance result -->
+      <div id="optimizeArea" style="display:none">
+        <label>Auto Balance</label>
+        <!-- Win-rate 对比行 -->
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+          <div style="flex:1">
+            <div style="font-size:10px;color:var(--muted);margin-bottom:2px">原始</div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <div style="flex:1;height:8px;background:#21262d;border-radius:4px;overflow:hidden">
+                <div id="optOrigBar" style="height:100%;width:0%;background:#555;transition:width .4s"></div>
+              </div>
+              <span id="optOrigLabel" style="font-size:11px;min-width:32px;text-align:right;color:#888">—</span>
+            </div>
+          </div>
+          <div style="font-size:18px;color:var(--muted)”>→</div>
+          <div style="flex:1">
+            <div style="font-size:10px;color:var(--muted);margin-bottom:2px">优化后</div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <div style="flex:1;height:8px;background:#21262d;border-radius:4px;overflow:hidden">
+                <div id="optBestBar" style="height:100%;width:0%;background:var(--green);transition:width .4s"></div>
+              </div>
+              <span id="optBestLabel" style="font-size:14px;font-weight:700;min-width:36px;text-align:right;color:var(--green)">—</span>
+            </div>
+          </div>
+        </div>
+        <!-- Top-3 candidates -->
+        <div id="optCandidates" style="font-size:11px;display:flex;flex-direction:column;gap:4px"></div>
+        <!-- Apply button -->
+        <button class="btn btn-green btn-sm" id="btnApplyBest" onclick="doApplyBestSpec()" style="display:none;margin-top:6px;width:auto">✔ Apply Best Spec</button>
+      </div>
+
+      <!-- Score bar (validate) -->
+      <div id="scoreArea" style="display:none">
+        <label>Completeness Score</label>
+        <div class="score-wrap">
+          <div class="score-bar"><div class="score-fill" id="scoreFill"></div></div>
+          <span class="score-label" id="scoreLabel"></span>
+        </div>
+      </div>
+
+      <!-- Issues -->
+      <div id="issuesArea" style="display:none">
+        <label>Issues</label>
+        <div id="issuesList"></div>
+      </div>
+
+      <!-- Preview result -->
+      <div class="result-block empty" id="designResult">点击 Preview 查看解析结果</div>
+    </div>
+  </div>
+
+  <!-- ② Inject Panel -->
+  <div class="panel">
+    <div class="panel-head">
+      <span class="panel-title">② Publish</span>
+      <span class="panel-badge" id="injectBadge">—</span>
+    </div>
+    <div class="panel-body">
+      <div class="row">
+        <div>
+          <label>level_id</label>
+          <input type="text" id="levelId" value="gem_temple_v1" />
+        </div>
+        <div>
+          <label>player_id</label>
+          <input type="text" id="playerId" value="demo_player" />
+        </div>
+      </div>
+      <div>
+        <label>title（可选）</label>
+        <input type="text" id="levelTitle" value="宝石神庙挑战" />
+      </div>
+      <button class="btn btn-green btn-publish" id="btnPublish" onclick="doPublish()">🚀 Publish to Minecraft</button>
+      <div style="display:flex;gap:6px;margin-top:4px">
+        <button class="btn btn-sm" style="opacity:.5;flex:1" onclick="doInject()">⚙ Compile Only</button>
+        <button class="btn btn-sm btn-cyan" style="opacity:.7;flex:1" onclick="doLoad()">⬇ Reload MC</button>
+      </div>
+      <div class="result-block empty" id="injectResult">满意后点击发布到 Minecraft</div>
+    </div>
+  </div>
+
+  <!-- ③ Runtime Panel -->
+  <div class="panel">
+    <div class="panel-head">
+      <span class="panel-title">③ Runtime</span>
+      <span class="panel-badge" id="runtimeBadge">—</span>
+    </div>
+    <div class="panel-body">
+      <button class="btn btn-cyan" onclick="doLoad()">⬇ Load Level</button>  
+      <hr style="border-color:var(--border2)">
+      <div class="mc-feedback-row" id="mcFeedbackRow">
+        <span class="mc-dot" id="mcFeedbackDot"></span>
+        <span id="mcFeedbackText">MC 反馈：等待事件触发</span>
+      </div>
+      <hr style="border-color:var(--border2)">
+      <div style="font-size:10px;color:var(--text-dim);margin-bottom:4px">🔧 DEBUG — 真实游戏由 MC 玩家行为自动触发</div>
+      <div class="ev-btns">
+        <button class="btn btn-green" onclick="fireEvent('exp_collect_gem', {item:'gem'})" title="DEBUG: MC捡物自动触发">💎 Collect Gem</button>
+        <button class="btn btn-yellow" onclick="fireEvent('exp_enter_altar', {zone:'altar'})" title="DEBUG: MC进入区域自动触发">⛩ Enter Altar</button>
+        <button class="btn btn-orange" onclick="fireEvent('exp_timer_tick', {})" title="DEBUG: 计时器自动触发">⏱ Timer Tick</button>
+        <button class="btn btn-red" onclick="fireEvent('exp_guard_detect', {})" title="DEBUG: 守卫检测">🛡 Guard Detect</button>
+      </div>
+      <div class="result-block empty" id="runtimeResult">发布关卡后触发事件</div>
+    </div>
+  </div>
+
+  <!-- ④ State Panel -->
+  <div class="panel">
+    <div class="panel-head">
+      <span class="panel-title">④ State</span>
+      <div style="display:flex;gap:6px;align-items:center">
+        <span class="panel-badge" id="stateBadge">—</span>
+        <button class="btn btn-sm btn-cyan" onclick="doRefreshState()" style="padding:2px 8px;font-size:10px;">↻ Refresh</button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div style="text-align:center">
+        <span class="status-badge status-idle" id="statusBadge">IDLE</span>
+      </div>
+      <div class="counter-row" id="counters"></div>
+      <div class="result-block empty" id="stateResult">Refresh 刷新状态</div>
+    </div>
+  </div>
+
+  <!-- ⑤ Debug Panel -->
+  <div class="panel">
+    <div class="panel-head">
+      <span class="panel-title">⑤ Debug</span>
+      <div style="display:flex;gap:6px;align-items:center">
+        <span class="panel-badge" id="debugBadge">—</span>
+        <button class="btn btn-sm btn-cyan" onclick="doRefreshDebug()" style="padding:2px 8px;font-size:10px;">↻ Refresh</button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="result-block empty" id="debugResult">Refresh 查看最后一次事件</div>
+    </div>
+  </div>
+
+  <!-- ⑥ Timeline Panel -->
+  <div class="panel">
+    <div class="panel-head">
+      <span class="panel-title">⑥ Timeline</span>
+      <div style="display:flex;gap:6px;align-items:center">
+        <span class="panel-badge" id="timelineBadge">—</span>
+        <button class="btn btn-sm btn-cyan" onclick="doRefreshTimeline()" style="padding:2px 8px;font-size:10px;">↻ Refresh</button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div id="timelineList" class="result-block empty">Refresh 查看事件流</div>
+    </div>
+  </div>
+
+</div><!-- .panels -->
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+/* ─── Globals ──────────────────────────────────────────────────── */
+const $ = id => document.getElementById(id)
+const BASE = () => ($('baseUrl').value || 'http://localhost:8000').replace(/\/$/, '')
+let _pollTimer = null
+
+/* ─── HTTP helpers ─────────────────────────────────────────────── */
+async function api(method, path, body) {
+  const url = BASE() + path
+  const opts = { method, headers: { 'Content-Type': 'application/json' } }
+  if (body !== undefined) opts.body = JSON.stringify(body)
+  const r = await fetch(url, opts)
+  if (!r.ok) {
+    const txt = await r.text().catch(() => '')
+    throw new Error(`HTTP ${r.status}: ${txt.slice(0, 200)}`)
+  }
+  return r.json()
+}
+const GET    = p     => api('GET', p)
+const POST   = (p,b) => api('POST', p, b)
+const DELETE = p     => api('DELETE', p)
+
+/* ─── Toast ────────────────────────────────────────────────────── */
+let _toastTimer
+function toast(msg, type = '') {
+  const el = $('toast')
+  el.textContent = msg
+  el.className = 'show ' + type
+  clearTimeout(_toastTimer)
+  _toastTimer = setTimeout(() => { el.className = '' }, 3000)
+}
+
+/* ─── Spinner on button ────────────────────────────────────────── */
+function withSpin(btn, fn) {
+  const orig = btn.innerHTML
+  btn.disabled = true
+  btn.innerHTML = orig + '<span class="spinner"></span>'
+  return fn().finally(() => { btn.disabled = false; btn.innerHTML = orig })
+}
+
+/* ─── Render helpers ───────────────────────────────────────────── */
+function kv(k, v, cls = '') {
+  return `<div class="kv"><span class="k">${k}:</span><span class="v ${cls}">${v}</span></div>`
+}
+function renderKV(obj, colorMap = {}) {
+  return Object.entries(obj).map(([k, v]) => {
+    const cls = colorMap[k] || (v === true ? 'green' : v === false ? 'red' : '')
+    return kv(esc(k), esc(String(v)), cls)
+  }).join('')
+}
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+}
+
+/* ─── Health check ─────────────────────────────────────────────── */
+async function checkHealth() {
+  const dot = $('statusDot'), txt = $('statusText')
+  dot.className = 'dot dot-gray'; txt.textContent = '检测中…'
+  try {
+    const h = await GET('/')
+    if (!h.status) throw new Error('unexpected response')
+    dot.className = 'dot dot-green'; txt.textContent = '已连接'
+    toast('后端连接正常', 'ok')
+  } catch(e) {
+    dot.className = 'dot dot-red'; txt.textContent = '无法连接'
+    toast('连接失败: ' + e.message, 'err')
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   ① Design: Preview
+───────────────────────────────────────────────────────────────── */
+async function doPreview() {
+  const btn = event.target
+  const text = $('designText').value.trim()
+  if (!text) { toast('请输入设计描述', 'err'); return }
+  await withSpin(btn, async () => {
+    const r = await POST('/experience/preview', { text })
+    const ds = r.design_spec
+    const es = r.experience_spec_summary
+
+    // Badge
+    $('designBadge').textContent = `${ds.triggers.length} triggers`
+
+    // Score (from summary)
+    $('scoreArea').style.display = 'block'
+    const scoreVal = es.is_empty ? 0 : 0.9
+    renderScore(scoreVal)
+
+    // Issues
+    if (r.warnings.length) {
+      $('issuesArea').style.display = 'block'
+      $('issuesList').innerHTML = r.warnings.map(w =>
+        `<div class="issue-item">${esc(w)}</div>`
+      ).join('')
+    } else {
+      $('issuesArea').style.display = 'none'
+    }
+
+    // Result
+    let html = ''
+    html += kv('goal', esc(ds.goal || '—'), 'blue')
+    html += kv('win_condition', esc(ds.win_condition || '—'), ds.win_condition ? 'green' : 'red')
+    html += kv('lose_condition', esc(ds.lose_condition || '—'), ds.lose_condition ? 'yellow' : '')
+    html += kv('time_limit', ds.time_limit != null ? ds.time_limit + 's' : '—')
+
+    html += `<div style="margin:6px 0 3px"><span class="k">triggers:</span></div>`
+    html += `<div class="chip-list">`
+    for (const t of ds.triggers) {
+      html += `<span class="chip ${esc(t.trigger_type)}" title="${esc(t.action)}">[${esc(t.trigger_type)}] ${esc(t.event)}</span>`
+    }
+    if (!ds.triggers.length) html += `<span class="chip" style="color:var(--red)">none</span>`
+    html += `</div>`
+
+    html += `<div style="margin:6px 0 3px"><span class="k">state_vars:</span></div>`
+    for (const [k, v] of Object.entries(ds.state_vars || {})) {
+      html += kv(esc(k), esc(String(v)))
+    }
+    if (!Object.keys(ds.state_vars || {}).length) html += `<span style="color:var(--red)">no state</span>`
+
+    const el = $('designResult')
+    el.className = 'result-block'
+    el.innerHTML = html
+    toast('Preview 完成', 'ok')
+    setWorkflowStep(2)
+  }).catch(e => { toast('Preview 失败: ' + e.message, 'err') })
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   ① Design: Validate
+───────────────────────────────────────────────────────────────── */
+async function doValidate() {
+  const btn = event.target
+  const text = $('designText').value.trim()
+  if (!text) { toast('请输入设计描述', 'err'); return }
+  await withSpin(btn, async () => {
+    const r = await POST('/experience/validate', { text })
+
+    $('scoreArea').style.display = 'block'
+    renderScore(r.completeness_score)
+
+    if (r.issues.length) {
+      $('issuesArea').style.display = 'block'
+      $('issuesList').innerHTML = r.issues.map(w =>
+        `<div class="issue-item">${esc(w)}</div>`
+      ).join('')
+    } else {
+      $('issuesArea').style.display = 'block'
+      $('issuesList').innerHTML = `<div style="color:var(--green);font-size:11px;">✓ 设计完整，无问题</div>`
+    }
+
+    // update design result with valid ds
+    const ds = r.design_spec
+    $('designBadge').textContent = r.valid ? `✓ valid` : `✗ invalid`
+    toast(r.valid ? `Validate 通过 (${r.completeness_score})` : `不完整 (${r.completeness_score})`,
+          r.valid ? 'ok' : 'err')
+  }).catch(e => { toast('Validate 失败: ' + e.message, 'err') })
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   ① Design: Auto Balance
+───────────────────────────────────────────────────────────────── */
+let _lastBestSpec = null   // 存储最优 spec 用于 Apply
+
+async function doOptimize() {
+  const btn = event.target
+  const levelId = $('levelId').value.trim()
+  if (!levelId) { toast('请先填写 level_id，再运行 Auto Balance', 'err'); return }
+
+  await withSpin(btn, async () => {
+    const r = await POST('/experience/optimize', {
+      level_id: levelId,
+      target_win_rate: 0.5,
+      k: 30,
+      n_sim: 150,
+    })
+
+    $('optimizeArea').style.display = 'block'
+
+    // ―― 原始胜率 ――
+    const origPct = Math.round((r.original_win_rate ?? 0) * 100)
+    $('optOrigBar').style.width = origPct + '%'
+    $('optOrigLabel').textContent = origPct + '%'
+
+    // ―― 最优化后胜率 ――
+    const bestPct = Math.round((r.optimized_win_rate ?? 0) * 100)
+    const bestColor = bestPct >= 40 && bestPct <= 65 ? 'var(--green)'
+                    : bestPct >= 25 ? 'var(--yellow)' : 'var(--red)'
+    $('optBestBar').style.width = bestPct + '%'
+    $('optBestBar').style.background = bestColor
+    $('optBestLabel').textContent = bestPct + '%'
+    $('optBestLabel').style.color = bestColor
+
+    // ―― Top-3 candidates ――
+    const candidates = r.candidates || []
+    $('optCandidates').innerHTML = candidates.map((c, i) => {
+      const expanded = i === 0   // 自动展开 Top-1
+      const diffC  = c.difficulty
+      const diffColor = { easy: '#1a7f37', medium: '#9a6700', hard: '#c9105c', extreme: '#880000' }[diffC] || '#888'
+      const winPct = Math.round((c.win_rate ?? 0) * 100)
+      const scoreVal = c.score != null ? (c.score * 100).toFixed(0) : '—'
+      const id = `cand_${i}`
+      return `<div style="border:1px solid #30363d;border-radius:5px;overflow:hidden">
+        <div onclick="toggleCand('${id}')" style="cursor:pointer;padding:5px 8px;background:#161b22;display:flex;justify-content:space-between;align-items:center;gap:6px">
+          <span style="color:var(--muted);font-size:10px">#${c.rank}</span>
+          <span style="flex:1;color:var(--fg)">win ${winPct}%</span>
+          <span style="font-size:10px;padding:1px 5px;border-radius:8px;background:#1f2937;border:1px solid ${diffColor};color:${diffColor}">${diffC}</span>
+          <span style="font-size:10px;color:var(--muted)">score ${scoreVal}</span>
+          <span style="font-size:10px;color:var(--muted)">${esc(c.diff_summary || '')}</span>
+          <span id="${id}_arrow" style="font-size:10px;color:var(--muted)">${expanded ? '▲' : '▼'}</span>
+        </div>
+        <pre id="${id}" style="display:${expanded ? 'block' : 'none'};margin:0;padding:8px;font-size:9px;line-height:1.5;overflow-x:auto;background:#0d1117;color:var(--muted);max-height:160px;overflow-y:auto">${esc(JSON.stringify(c.spec, null, 2))}</pre>
+      </div>`
+    }).join('')
+
+    // 存储最优 spec
+    _lastBestSpec = r.best_spec || null
+    $('btnApplyBest').style.display = _lastBestSpec ? 'block' : 'none'
+
+    toast(`Auto Balance 完成：${origPct}% → ${bestPct}% win rate`, 'ok')
+  }).catch(e => { toast('Auto Balance 失败: ' + e.message, 'err') })
+}
+
+function toggleCand(id) {
+  const el = $(id)
+  const arrow = $(id + '_arrow')
+  if (!el) return
+  const visible = el.style.display !== 'none'
+  el.style.display = visible ? 'none' : 'block'
+  if (arrow) arrow.textContent = visible ? '▼' : '▲'
+}
+
+async function doApplyBestSpec() {
+  if (!_lastBestSpec) { toast('没有可用的最优 Spec', 'err'); return }
+  const levelId = $('levelId').value.trim()
+  if (!levelId) { toast('请填写 level_id', 'err'); return }
+  const btn = event.target
+  await withSpin(btn, async () => {
+    // 直接用最优 spec 重新注入：需要 /experience/apply-spec 或利用 simulate 预览
+    // 展示最优 spec JSON 区域下载为文本以供设计者审阅
+    const specJson = JSON.stringify(_lastBestSpec, null, 2)
+    const blob = new Blob([specJson], { type: 'application/json' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href     = url
+    a.download = `${levelId}_optimized_spec.json`
+    a.click()
+    URL.revokeObjectURL(url)
+    toast('最优 Spec 已下载为 JSON，可手动应用到关卡', 'ok')
+  }).catch(e => { toast('Apply 失败: ' + e.message, 'err') })
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   ① Design: Simulate (Evaluate Level)
+───────────────────────────────────────────────────────────────── */
+async function doSimulate() {
+  const btn = event.target
+  const text = $('designText').value.trim()
+  const levelId = $('levelId').value.trim()
+
+  // Need either a level_id (for saved level) or will inline-simulate via preview first
+  if (!levelId && !text) { toast('请输入设计描述或填写 level_id', 'err'); return }
+
+  await withSpin(btn, async () => {
+    let payload = {}
+    if (levelId) {
+      payload = { level_id: levelId, n: 200 }
+    } else {
+      // Inline: preview to get spec, then simulate
+      toast('没有 level_id，请先 Inject 后再 Evaluate', 'err')
+      return
+    }
+
+    const r = await POST('/experience/simulate', payload)
+    $('simArea').style.display = 'block'
+
+    // Win rate bar
+    const pct = Math.round((r.win_rate ?? 0) * 100)
+    const barColor = pct >= 75 ? 'var(--green)' : pct >= 45 ? 'var(--yellow)' : 'var(--red)'
+    $('simWinBar').style.width = pct + '%'
+    $('simWinBar').style.background = barColor
+    $('simWinLabel').textContent = pct + '%'
+    $('simWinLabel').style.color = barColor
+
+    // Difficulty badge
+    const diff = r.difficulty || '—'
+    const diffColors = { easy: '#1a7f37', medium: '#9a6700', hard: '#c9105c', extreme: '#880000' }
+    $('simDiffBadge').textContent = diff
+    $('simDiffBadge').style.color = diffColors[diff] || '#888'
+    $('simDiffBadge').style.borderColor = diffColors[diff] || '#444'
+
+    // Insights
+    const insights = Array.isArray(r.insights) ? r.insights : []
+    $('simInsights').innerHTML = insights.map(i => `<div>• ${esc(i)}</div>`).join('')
+
+    // Meta
+    const meta = r._meta || {}
+    const avgSteps = r.avg_steps != null ? r.avg_steps.toFixed(1) : '—'
+    $('simInsights').innerHTML +=
+      `<div style="margin-top:4px;font-size:10px;opacity:.5">n=${meta.n ?? '-'} · avg_steps=${avgSteps} · ${(meta.elapsed_ms ?? 0).toFixed(1)}ms</div>`
+
+    toast(`Evaluate: ${pct}% win rate (${diff})`, pct >= 45 ? 'ok' : 'err')
+    setWorkflowStep(3)
+  }).catch(e => { toast('Simulate 失败: ' + e.message, 'err') })
+}
+
+function renderScore(val) {
+  const fill = $('scoreFill')
+  const lbl  = $('scoreLabel')
+  const pct  = Math.round(val * 100)
+  fill.style.width = pct + '%'
+  fill.style.background = val >= 0.8 ? 'var(--green)' : val >= 0.5 ? 'var(--yellow)' : 'var(--red)'
+  lbl.textContent = pct + '%'
+  lbl.style.color = val >= 0.8 ? 'var(--green)' : val >= 0.5 ? 'var(--yellow)' : 'var(--red)'
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   ② Inject
+───────────────────────────────────────────────────────────────── */
+async function doInject() {
+  const btn = event.target
+  const text = $('designText').value.trim()
+  const levelId = $('levelId').value.trim()
+  const playerId = $('playerId').value.trim()
+  if (!levelId || !playerId) { toast('level_id 和 player_id 不能为空', 'err'); return }
+  if (!text) { toast('请先在 Design 面板输入描述', 'err'); return }
+
+  await withSpin(btn, async () => {
+    const r = await POST('/story/inject', {
+      level_id: levelId,
+      title: $('levelTitle').value || levelId,
+      text,
+      player_id: playerId,
+    })
+    const es = r.experience_spec_summary || {}
+    $('injectBadge').textContent = es.is_empty === false ? '✓ ok' : 'injected'
+
+    let html = kv('status', esc(r.status || 'ok'), r.status === 'ok' ? 'green' : 'yellow')
+    html += kv('level_id', esc(r.level_id || levelId), 'blue')
+    html += kv('rule_count', es.rule_count ?? '—')
+    html += kv('trigger_count', es.trigger_count ?? '—')
+    html += kv('has_win_condition', es.has_win_condition != null ? String(es.has_win_condition) : '—',
+              es.has_win_condition ? 'green' : 'red')
+    html += kv('is_empty', es.is_empty != null ? String(es.is_empty) : '—',
+              !es.is_empty ? 'green' : 'red')
+    html += kv('compiler_mode', esc(es.compiler_mode || '—'), 'purple')
+
+    const el = $('injectResult')
+    el.className = 'result-block'
+    el.innerHTML = html
+    toast('关卡注入成功', 'ok')
+  }).catch(e => { toast('Inject 失败: ' + e.message, 'err') })
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   ③ Runtime: Load
+───────────────────────────────────────────────────────────────── */
+async function doLoad() {
+  const btn = event.target
+  const levelId = $('levelId').value.trim()
+  const playerId = $('playerId').value.trim()
+  if (!levelId || !playerId) { toast('请先填写 level_id / player_id', 'err'); return }
+
+  await withSpin(btn, async () => {
+    const r = await POST(`/story/load/${playerId}/${levelId}`, {})
+    $('runtimeBadge').textContent = '✓ loaded'
+
+    let html = kv('status', esc(r.status || 'ok'), 'green')
+    html += kv('player_id', esc(playerId), 'blue')
+    html += kv('level_id', esc(r.level_id || levelId), 'blue')
+
+    const el = $('runtimeResult')
+    el.className = 'result-block'
+    el.innerHTML = html
+    toast('关卡加载成功，可开始触发事件', 'ok')
+    // auto refresh state
+    await doRefreshState()
+  }).catch(e => { toast('Load 失败: ' + e.message, 'err') })
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   ③ Runtime: Fire event
+───────────────────────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────────────
+   Workflow step tracker
+──────────────────────────────────────────────────────────────── */
+function setWorkflowStep(n) {
+  for (let i = 1; i <= 4; i++) {
+    const el = $('wfStep' + i)
+    if (!el) continue
+    el.classList.remove('active', 'done')
+    if (i < n) el.classList.add('done')
+    else if (i === n) el.classList.add('active')
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   ② Publish: inject + load combined
+──────────────────────────────────────────────────────────────── */
+async function doPublish() {
+  const btn = event.target
+  const text = $('designText').value.trim()
+  const levelId = $('levelId').value.trim()
+  const playerId = $('playerId').value.trim()
+  if (!levelId || !playerId) { toast('请填写 level_id 和 player_id', 'err'); return }
+  if (!text) { toast('请先在 Design 面板输入描述', 'err'); return }
+  await withSpin(btn, async () => {
+    // Step 1: inject (compile & save)
+    const ri = await POST('/story/inject', {
+      level_id: levelId,
+      title: $('levelTitle').value || levelId,
+      text, player_id: playerId,
+    })
+    const es = ri.experience_spec_summary || {}
+    $('injectBadge').textContent = '✓ published'
+    // Step 2: push-load → RCON → Plugin 立即加载给玩家（失败时降级为仅存储）
+    let pushOk = false
+    let pushMsg = ''
+    try {
+      const rp = await POST('/world/push-load', { player_id: playerId, level_id: levelId })
+      pushOk = rp.status === 'ok'
+      pushMsg = rp.rcon_output ? String(rp.rcon_output).slice(0, 60) : (rp.msg || '')
+    } catch (e) {
+      pushMsg = e.message || 'push-load error'
+    }
+    $('runtimeBadge').textContent = pushOk ? '✓ live' : '✓ saved'
+
+    let html = kv('status', pushOk ? 'pushed to MC' : 'saved (player offline?)', pushOk ? 'green' : 'yellow')
+    html += kv('level_id', esc(levelId), 'blue')
+    html += kv('player_id', esc(playerId), 'blue')
+    html += kv('rule_count', es.rule_count ?? '—')
+    html += kv('has_win', es.has_win_condition != null ? String(es.has_win_condition) : '—',
+              es.has_win_condition ? 'green' : 'red')
+    html += kv('compiler', esc(es.compiler_mode || '—'), 'purple')
+    if (pushMsg) html += kv('mc_resp', esc(pushMsg), pushOk ? 'green' : 'yellow')
+    const el = $('injectResult')
+    el.className = 'result-block'
+    el.innerHTML = html
+
+    const dot = $('mcFeedbackDot')
+    const txt = $('mcFeedbackText')
+    if (dot) dot.className = pushOk ? 'mc-dot live' : 'mc-dot'
+    if (txt) txt.textContent = pushOk
+      ? `✓ 关卡 ${esc(levelId)} 已推送给 ${esc(playerId)}`
+      : `关卡已保存，玩家上线后可手动加载（${esc(pushMsg.slice(0,40))}）`
+    setWorkflowStep(4)
+    toast(pushOk ? `🚀 ${levelId} 已推送到 Minecraft！` : `💾 ${levelId} 已保存（玩家不在线）`, 'ok')
+    await doRefreshState()
+  }).catch(e => { toast('Publish 失败: ' + e.message, 'err') })
+}
+
+async function fireEvent(questEvent, extraPayload = {}) {
+  const btn = event.target
+  const playerId = $('playerId').value.trim()
+  if (!playerId) { toast('请先填写 player_id', 'err'); return }
+
+  await withSpin(btn, async () => {
+    const payload = { quest_event: questEvent, ...extraPayload }
+    const r = await POST('/world/story/rule-event', {
+      player_id: playerId,
+      event_type: 'quest_event',
+      payload,
+    })
+    const state = r.experience_state || {}
+    const outcome = r.experience_outcome
+    const mcFeedback = r.mc_feedback
+
+    $('runtimeBadge').textContent = outcome ? `★ ${outcome}` : 'fired'
+
+    let html = kv('event', esc(questEvent), 'cyan')
+    html += kv('outcome', esc(outcome || 'none'), outcome === 'win' ? 'green' : outcome === 'lose' ? 'red' : '')
+    for (const [k, v] of Object.entries(state)) {
+      if (!k.startsWith('_')) html += kv(esc(k), esc(String(v)), 'blue')
+    }
+
+    const el = $('runtimeResult')
+    el.className = 'result-block'
+    el.innerHTML = html
+
+    if (mcFeedback) {
+      const dot = $('mcFeedbackDot')
+      const txt = $('mcFeedbackText')
+      if (dot && txt) {
+        if (mcFeedback.sent) {
+          dot.className = 'mc-dot live'
+          txt.textContent = '✓ MC 已通知: ' + String(mcFeedback.cmd || '').slice(0, 40)
+        } else {
+          dot.className = 'mc-dot'
+          txt.textContent = '⚠ MC 未连接 (' + (mcFeedback.reason || 'no rcon') + ')'
+        }
+      }
+    }
+    if (outcome === 'win') toast('🎉 WIN！游戏通关！', 'ok')
+    else if (outcome === 'lose') toast('💀 LOSE！游戏失败', 'err')
+    else toast(`事件已触发: ${questEvent}`, 'ok')
+
+    // auto-refresh all observe panels
+    await Promise.all([doRefreshState(), doRefreshDebug(), doRefreshTimeline()])
+  }).catch(e => { toast('事件触发失败: ' + e.message, 'err') })
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   ④ State
+───────────────────────────────────────────────────────────────── */
+async function doRefreshState() {
+  const playerId = $('playerId').value.trim()
+  if (!playerId) return
+  try {
+    const r = await GET(`/experience/state/${playerId}`)
+    const status = r.status || 'in_progress'
+    const state  = r.state || {}
+    const prog   = r.progress
+
+    // status badge
+    const badge = $('statusBadge')
+    badge.className = `status-badge status-${status === 'win' ? 'win' : status === 'lose' ? 'lose' : status === 'in_progress' ? 'playing' : 'idle'}`
+    badge.textContent = status.toUpperCase()
+    $('stateBadge').textContent = status
+
+    // counters
+    const counterKeys = Object.entries(state).filter(([k]) => !k.startsWith('_'))
+    $('counters').innerHTML = counterKeys.map(([k, v]) =>
+      `<div class="counter-box">
+        <div class="cnt-val">${esc(String(v))}</div>
+        <div class="cnt-lbl">${esc(k)}</div>
+      </div>`
+    ).join('')
+
+    // detail
+    let html = kv('status', esc(status), status === 'win' ? 'green' : status === 'lose' ? 'red' : 'blue')
+    html += kv('level_id', esc(r.level_id || '—'), 'purple')
+    html += kv('timeline_events', esc(String(r.timeline?.length ?? 0)))
+    if (prog) {
+      html += kv('progress_goal', esc(prog.goal || '—'))
+      html += kv('current', esc(String(prog.current ?? '—')))
+      html += kv('remaining', esc(String(prog.remaining ?? '—')))
+      html += kv('progress_pct', esc(String(Math.round((prog.progress_pct || 0) * 100)) + '%'))
+    }
+    const el = $('stateResult')
+    el.className = 'result-block'
+    el.innerHTML = html
+  } catch(e) {
+    $('stateResult').innerHTML = `<span style="color:var(--red)">${esc(e.message)}</span>`
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   ⑤ Debug
+───────────────────────────────────────────────────────────────── */
+async function doRefreshDebug() {
+  const playerId = $('playerId').value.trim()
+  if (!playerId) return
+  try {
+    const d = await GET(`/experience/debug/${playerId}`)
+    if (!d.last_event) {
+      $('debugResult').className = 'result-block empty'
+      $('debugResult').textContent = '尚无事件记录'
+      return
+    }
+    $('debugBadge').textContent = esc(d.matched_trigger || '?')
+
+    let html = kv('last_event', esc(d.last_event || '—'), 'cyan')
+    html += kv('matched_trigger', esc(d.matched_trigger || 'none'), d.matched_trigger ? 'green' : 'red')
+    html += kv('outcome', esc(d.outcome || 'none'), d.outcome === 'win' ? 'green' : d.outcome === 'lose' ? 'red' : '')
+
+    // state diff
+    const before = d.state_before || {}
+    const after  = d.state_after  || {}
+    const allKeys = new Set([...Object.keys(before), ...Object.keys(after)])
+    if (allKeys.size) {
+      html += `<div style="margin:6px 0 3px"><span class="k">state diff:</span></div>`
+      for (const k of allKeys) {
+        const bv = before[k], av = after[k]
+        if (bv !== av) {
+          html += `<div class="diff-row"><span class="k">${esc(k)}:</span>
+            <span class="diff-old">${esc(String(bv ?? '?'))}</span>
+            <span class="diff-arrow"> → </span>
+            <span class="diff-new">${esc(String(av ?? '?'))}</span></div>`
+        } else {
+          html += `<div class="diff-row"><span class="k">${esc(k)}:</span><span class="v">${esc(String(av))}</span></div>`
+        }
+      }
+    }
+
+    // rule evaluation
+    const evals = d.rule_evaluation || []
+    if (evals.length) {
+      html += `<div style="margin:6px 0 3px"><span class="k">rule_evaluation:</span></div>`
+      for (const e of evals) {
+        const cls = e.result ? 'green' : ''
+        html += `<div style="font-size:10px;padding:2px 0">
+          <span class="chip ${e.result ? 'item_collect' : 'unknown'}">${esc(e.type)}</span>
+          <span class="v ${cls}" style="font-size:10px;margin-left:4px">${esc(e.rule)}</span>
+          <span style="color:${e.result ? 'var(--green)' : 'var(--text-dim)'};margin-left:4px">${e.result ? '✓' : '✗'}</span>
+        </div>`
+      }
+    }
+
+    const el = $('debugResult')
+    el.className = 'result-block'
+    el.innerHTML = html
+  } catch(e) {
+    $('debugResult').innerHTML = `<span style="color:var(--red)">${esc(e.message)}</span>`
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   ⑥ Timeline
+───────────────────────────────────────────────────────────────── */
+async function doRefreshTimeline() {
+  const playerId = $('playerId').value.trim()
+  if (!playerId) return
+  try {
+    const r = await GET(`/experience/timeline/${playerId}`)
+    const items = r.timeline || []
+    $('timelineBadge').textContent = `${r.count || 0} events`
+
+    if (!items.length) {
+      $('timelineList').className = 'result-block empty'
+      $('timelineList').textContent = '尚无事件'
+      return
+    }
+
+    $('timelineList').className = 'result-block'
+    $('timelineList').innerHTML = items.map((e, i) => {
+      const isWin  = e.outcome === 'win'
+      const isLose = e.outcome === 'lose'
+      const dotColor = isWin ? 'var(--green)' : isLose ? 'var(--red)' : 'var(--blue)'
+      const state = e.state || {}
+      const stateStr = Object.entries(state).filter(([k])=>!k.startsWith('_'))
+        .map(([k,v]) => `${k}=${v}`).join(', ')
+      return `<div class="tl-entry">
+        <div class="tl-dot" style="background:${dotColor}"></div>
+        <div class="tl-content">
+          <div class="tl-event">${esc(e.event || '—')}
+            ${e.outcome ? `<span class="tl-${isWin?'win':isLose?'lose':'none'}" style="margin-left:6px;font-size:11px">${esc(e.outcome.toUpperCase())}</span>` : ''}
+          </div>
+          <div class="tl-meta">#${i+1} · ${stateStr || '—'}</div>
+        </div>
+      </div>`
+    }).join('')
+  } catch(e) {
+    $('timelineList').innerHTML = `<span style="color:var(--red)">${esc(e.message)}</span>`
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Bonus: Full Demo
+───────────────────────────────────────────────────────────────── */
+async function runFullDemo() {
+  const btn = $('btnFullDemo')
+  btn.disabled = true
+
+  const steps = [
+    ['Preview',   doPreviewSilent],
+    ['Validate',  doValidateSilent],
+    ['Inject',    doInjectSilent],
+    ['Load',      doLoadSilent],
+    ['Gem #1',    () => fireEventSilent('exp_collect_gem', {item:'gem'})],
+    ['Gem #2',    () => fireEventSilent('exp_collect_gem', {item:'gem'})],
+    ['Gem #3',    () => fireEventSilent('exp_collect_gem', {item:'gem'})],
+  ]
+
+  for (const [label, fn] of steps) {
+    btn.textContent = `⏳ ${label}…`
+    try {
+      await fn()
+      await sleep(400)
+    } catch(e) {
+      toast(`Full Demo 在 ${label} 步骤失败: ${e.message}`, 'err')
+      btn.disabled = false
+      btn.textContent = '▶ Run Full Demo'
+      return
+    }
+  }
+
+  await Promise.all([doRefreshState(), doRefreshDebug(), doRefreshTimeline()])
+  btn.disabled = false
+  btn.textContent = '▶ Run Full Demo'
+  toast('🎉 Full Demo 完成！', 'ok')
+}
+
+// Silent variants (no event.target needed)
+async function doPreviewSilent() {
+  const text = $('designText').value.trim()
+  if (!text) throw new Error('设计文本为空')
+  const r = await POST('/experience/preview', { text })
+  const ds = r.design_spec
+  $('designBadge').textContent = `${ds.triggers.length} triggers`
+  renderScore(r.experience_spec_summary.is_empty === false ? 0.9 : 0)
+  let html = kv('goal', esc(ds.goal || '—'), 'blue')
+  html += kv('win_condition', esc(ds.win_condition || '—'), ds.win_condition ? 'green' : 'red')
+  html += `<div class="chip-list">`
+  for (const t of ds.triggers) html += `<span class="chip ${esc(t.trigger_type)}">[${esc(t.trigger_type)}] ${esc(t.event)}</span>`
+  html += `</div>`
+  const el = $('designResult'); el.className = 'result-block'; el.innerHTML = html
+}
+async function doValidateSilent() {
+  const text = $('designText').value.trim()
+  if (!text) throw new Error('设计文本为空')
+  const r = await POST('/experience/validate', { text })
+  renderScore(r.completeness_score)
+  $('scoreArea').style.display = 'block'
+  if (!r.issues.length) {
+    $('issuesArea').style.display='block'
+    $('issuesList').innerHTML = `<div style="color:var(--green);font-size:11px;">✓ 设计完整</div>`
+  }
+}
+async function doInjectSilent() {
+  const text = $('designText').value.trim()
+  const levelId = $('levelId').value.trim()
+  const playerId = $('playerId').value.trim()
+  if (!levelId || !playerId || !text) throw new Error('缺少必要参数')
+  const r = await POST('/story/inject', {
+    level_id: levelId,
+    title: $('levelTitle').value || levelId,
+    text, player_id: playerId,
+  })
+  const es = r.experience_spec_summary || {}
+  $('injectBadge').textContent = '✓ ok'
+  const el = $('injectResult'); el.className = 'result-block'
+  el.innerHTML = kv('status', 'ok', 'green') + kv('rule_count', es.rule_count ?? '—') + kv('trigger_count', es.trigger_count ?? '—')
+}
+async function doLoadSilent() {
+  const levelId = $('levelId').value.trim()
+  const playerId = $('playerId').value.trim()
+  if (!levelId || !playerId) throw new Error('缺少 level_id 或 player_id')
+  const r = await POST(`/story/load/${playerId}/${levelId}`, {})
+  $('runtimeBadge').textContent = '✓ loaded'
+  const el = $('runtimeResult'); el.className = 'result-block'
+  el.innerHTML = kv('status', 'ok', 'green') + kv('level_id', esc(levelId), 'blue')
+  await doRefreshState()
+}
+async function fireEventSilent(questEvent, extraPayload = {}) {
+  const playerId = $('playerId').value.trim()
+  if (!playerId) throw new Error('缺少 player_id')
+  const r = await POST('/world/story/rule-event', {
+    player_id: playerId, event_type: 'quest_event',
+    payload: { quest_event: questEvent, ...extraPayload },
+  })
+  const outcome = r.experience_outcome
+  const state = r.experience_state || {}
+  $('runtimeBadge').textContent = outcome ? `★ ${outcome}` : 'fired'
+  let html = kv('event', esc(questEvent), 'cyan') + kv('outcome', esc(outcome || 'none'), outcome === 'win' ? 'green' : '')
+  for (const [k, v] of Object.entries(state)) {
+    if (!k.startsWith('_')) html += kv(esc(k), esc(String(v)), 'blue')
+  }
+  const el = $('runtimeResult'); el.className = 'result-block'; el.innerHTML = html
+}
+
+const sleep = ms => new Promise(res => setTimeout(res, ms))
+
+/* ─── Auto-init ────────────────────────────────────────────────── */
+window.addEventListener('DOMContentLoaded', () => {
+  checkHealth()
+  setWorkflowStep(1)
+  // Fill textarea with default turtle-soup example
+  if (!$('designText').value.trim()) {
+    $('designText').value = '玩家需要收集三块宝石才能解锁神庙大门。靠近祭坛可以获得奖励。被守卫发现则失败。限时60秒完成任务。'
+  }
+})
+</script>
+</body>
+</html>

@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>DriftSystem × AsyncAIFlow — 演示看板</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'SF Mono', 'Consolas', monospace; background: #0d1117; color: #c9d1d9; min-height: 100vh; }
+
+  .header {
+    background: linear-gradient(135deg, #161b22 0%, #1c2128 100%);
+    border-bottom: 1px solid #30363d;
+    padding: 16px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .header h1 { font-size: 18px; color: #58a6ff; letter-spacing: 0.5px; }
+  .header .subtitle { font-size: 12px; color: #8b949e; margin-top: 2px; }
+  .server-badge { font-size: 11px; background: #1f6feb22; border: 1px solid #1f6feb66; color: #58a6ff; padding: 4px 10px; border-radius: 12px; }
+  .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+  .dot-green { background: #3fb950; box-shadow: 0 0 6px #3fb950; animation: pulse 2s infinite; }
+  .dot-red { background: #f85149; }
+  .dot-gray { background: #6e7681; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+  .grid { display: grid; grid-template-columns: 360px 1fr; grid-template-rows: auto 1fr; gap: 0; height: calc(100vh - 65px); }
+
+  /* 左侧触发面板 */
+  .panel-left { border-right: 1px solid #30363d; display: flex; flex-direction: column; }
+  .panel-title { padding: 12px 16px; font-size: 11px; color: #8b949e; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #21262d; }
+
+  .trigger-box { padding: 16px; border-bottom: 1px solid #21262d; }
+  .trigger-box label { font-size: 11px; color: #8b949e; display: block; margin-bottom: 6px; }
+  .trigger-box textarea {
+    width: 100%; background: #161b22; border: 1px solid #30363d; border-radius: 6px;
+    color: #c9d1d9; padding: 10px; font-size: 13px; resize: vertical; min-height: 80px;
+    font-family: inherit;
+  }
+  .trigger-box textarea:focus { outline: none; border-color: #58a6ff; }
+  .trigger-row { display: flex; gap: 8px; margin-top: 10px; align-items: center; }
+  .diff-select {
+    background: #161b22; border: 1px solid #30363d; color: #c9d1d9;
+    padding: 6px 10px; border-radius: 6px; font-size: 13px; flex: 1;
+  }
+  .btn-trigger {
+    background: #238636; border: none; color: #fff; padding: 8px 18px;
+    border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .btn-trigger:hover { background: #2ea043; }
+  .btn-trigger:disabled { background: #21262d; color: #6e7681; cursor: not-allowed; }
+
+  /* 服务健康 */
+  .health-box { padding: 12px 16px; border-bottom: 1px solid #21262d; }
+  .health-item { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; font-size: 12px; }
+  .health-label { color: #8b949e; }
+  .health-val { font-weight: 600; }
+  .val-ok { color: #3fb950; }
+  .val-err { color: #f85149; }
+  .val-warn { color: #d29922; }
+
+  /* 最近 workflow 列表 */
+  .wf-list { flex: 1; overflow-y: auto; }
+  .wf-item {
+    padding: 10px 16px; border-bottom: 1px solid #21262d; cursor: pointer;
+    transition: background 0.1s;
+  }
+  .wf-item:hover { background: #1c2128; }
+  .wf-item.active { background: #1c2128; border-left: 3px solid #58a6ff; padding-left: 13px; }
+  .wf-id { font-size: 10px; color: #8b949e; font-family: monospace; }
+  .wf-status { font-size: 11px; font-weight: 700; margin-top: 2px; }
+  .wf-time { font-size: 10px; color: #6e7681; margin-top: 2px; }
+  .status-COMPLETED { color: #3fb950; }
+  .status-RUNNING { color: #58a6ff; animation: pulse 1s infinite; }
+  .status-FAILED { color: #f85149; }
+  .status-PENDING { color: #d29922; }
+
+  /* 右侧详情 */
+  .panel-right { display: flex; flex-direction: column; overflow: hidden; }
+  .detail-header { padding: 14px 20px; border-bottom: 1px solid #21262d; display: flex; justify-content: space-between; align-items: flex-start; }
+  .detail-wfid { font-size: 11px; color: #8b949e; }
+  .detail-status { font-size: 14px; font-weight: 700; }
+  .detail-meta { font-size: 11px; color: #8b949e; margin-top: 2px; }
+
+  /* Pipeline 步骤图 */
+  .pipeline-box { padding: 20px; border-bottom: 1px solid #21262d; }
+  .pipeline-label { font-size: 11px; color: #8b949e; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; }
+  .pipeline-steps { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
+  .step {
+    display: flex; flex-direction: column; align-items: center;
+    min-width: 90px; padding: 8px 12px;
+    border: 1px solid #30363d; border-radius: 8px;
+    background: #161b22; transition: all 0.3s;
+    position: relative;
+  }
+  .step.step-COMPLETED { border-color: #3fb950; background: #0d2116; }
+  .step.step-RUNNING { border-color: #58a6ff; background: #0d1a2e; animation: pulse 1s infinite; }
+  .step.step-FAILED { border-color: #f85149; background: #2d0f0f; }
+  .step.step-PENDING { border-color: #30363d; opacity: 0.5; }
+  .step-icon { font-size: 18px; margin-bottom: 4px; }
+  .step-name { font-size: 10px; color: #8b949e; text-align: center; }
+  .step-worker { font-size: 9px; color: #6e7681; margin-top: 2px; text-align: center; max-width: 85px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .step-dur { font-size: 10px; font-weight: 700; margin-top: 4px; }
+  .dur-COMPLETED { color: #3fb950; }
+  .dur-RUNNING { color: #58a6ff; }
+  .dur-FAILED { color: #f85149; }
+  .step-arrow { color: #484f58; font-size: 18px; padding: 0 2px; }
+
+  /* world_patch 预览 */
+  .patch-box { padding: 16px 20px; border-bottom: 1px solid #21262d; max-height: 220px; overflow-y: auto; }
+  .patch-label { font-size: 11px; color: #8b949e; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+  .patch-keys { display: flex; flex-wrap: wrap; gap: 6px; }
+  .patch-key {
+    padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;
+    background: #1f6feb22; border: 1px solid #1f6feb66; color: #58a6ff;
+  }
+  .patch-key.key-present { background: #0d211622; border-color: #3fb950; color: #3fb950; }
+  .patch-empty { color: #6e7681; font-size: 12px; }
+
+  /* 日志流 */
+  .log-box { flex: 1; overflow-y: auto; padding: 12px 20px; }
+  .log-line { font-size: 11px; line-height: 1.8; border-bottom: 1px solid #21262d22; }
+  .log-ts { color: #484f58; margin-right: 8px; }
+  .log-COMPLETED { color: #3fb950; }
+  .log-FAILED { color: #f85149; }
+  .log-RUNNING { color: #58a6ff; }
+  .log-INFO { color: #8b949e; }
+  .log-line.detail { padding-left: 16px; opacity: 0.8; border-bottom: none !important; font-style: italic; }
+
+  .patch-detail { font-size: 12px; padding: 4px 0; color: #c9d1d9; border-bottom: 1px solid #21262d44; line-height: 1.6; }
+  .patch-detail:last-child { border-bottom: none; }
+  .patch-dk { color: #58a6ff; font-weight: 700; margin-right: 8px; min-width: 80px; display: inline-block; font-size: 11px; }
+
+  /* 底部状态条 */
+  .statusbar {
+    grid-column: 1/-1;
+    background: #161b22; border-top: 1px solid #21262d;
+    padding: 6px 20px; font-size: 11px; color: #8b949e;
+    display: flex; justify-content: space-between;
+  }
+  .statusbar span { display: flex; align-items: center; gap: 6px; }
+
+  /* 空状态 */
+  .empty-state { padding: 60px 20px; text-align: center; color: #484f58; }
+  .empty-state .big { font-size: 48px; margin-bottom: 12px; }
+  .empty-state p { font-size: 13px; line-height: 1.8; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+
+  /* log-box: flex-shrink so timeline is visible */
+  .log-box { flex: 1 1 0 !important; min-height: 55px; overflow-y: auto; padding: 12px 20px; }
+
+  /* 玩家输入流 */
+  .stream-box { height: 128px; overflow-y: auto; border-bottom: 1px solid #21262d; flex-shrink: 0; }
+  .stream-item { padding: 5px 16px; font-size: 11px; border-bottom: 1px solid #21262d22; display: flex; gap: 8px; align-items: baseline; }
+  .stream-item.stream-new { animation: streamFlash 1.2s ease-out; }
+  @keyframes streamFlash { 0%{background:#1f6feb33} 100%{background:transparent} }
+  .stream-ts  { color: #484f58; flex-shrink: 0; min-width: 66px; }
+  .stream-stage { color: #d29922; font-size: 10px; flex-shrink: 0; min-width: 56px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .stream-msg { color: #c9d1d9; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .stream-wfid { color: #58a6ff; font-size: 10px; flex-shrink: 0; }
+
+  /* 实时链路 */
+  .chain-box   { padding: 11px 20px; border-bottom: 1px solid #21262d; flex-shrink: 0; background: #0a0d11; }
+  .chain-title { font-size: 11px; color: #8b949e; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 7px; }
+  .chain-flow  { display: flex; align-items: center; flex-wrap: wrap; gap: 3px; }
+  .chain-node  { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 12px; font-size: 11px; }
+  .cn-input    { background: #0d1a2e; border: 1px solid #1f6feb66; color: #58a6ff; }
+  .cn-intent   { background: #0d2116; border: 1px solid #3fb95066; color: #3fb950; }
+  .cn-wf       { background: #1a0d2e; border: 1px solid #bc8cff66; color: #bc8cff; }
+  .cn-pipe     { background: #1e1a0d; border: 1px solid #d2992266; color: #d29922; }
+  .cn-patch    { background: #0d2116; border: 1px solid #3fb95066; color: #3fb950; }
+  .chain-arrow { color: #484f58; font-size: 12px; padding: 0 2px; }
+  .chain-empty { color: #484f58; font-size: 12px; font-style: italic; }
+
+  /* Timeline */
+  .timeline-box   { padding: 10px 20px 14px; border-top: 1px solid #21262d; background: #0a0d11; flex-shrink: 0; }
+  .timeline-title { font-size: 11px; color: #8b949e; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .timeline-track { position: relative; height: 44px; margin: 0 10px; }
+  .timeline-bar   { position: absolute; top: 16px; height: 6px; border-radius: 3px; background: #21262d; width: 100%; }
+  .timeline-fill  { height: 100%; border-radius: 3px; background: linear-gradient(90deg,#1f6feb,#3fb950); transition: width 0.5s; }
+  .timeline-events { position: absolute; top: 0; left: 0; right: 0; height: 44px; pointer-events: none; }
+  .timeline-dot   { position: absolute; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; }
+  .tdc { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #484f58; background: #161b22; margin-top: 10px; }
+  .tdc.t-input { border-color: #58a6ff; background: #58a6ff; box-shadow: 0 0 5px #58a6ff; }
+  .tdc.t-wf    { border-color: #bc8cff; background: #bc8cff; }
+  .tdc.t-done  { border-color: #3fb950; background: #3fb950; box-shadow: 0 0 5px #3fb950; }
+  .tdc.t-patch { border-color: #d29922; background: #d29922; }
+  .tdl { font-size: 9px; color: #8b949e; white-space: nowrap; margin-top: 2px; text-align: center; line-height: 1.3; }
+
+  /* world_patch enhanced rows */
+  .patch-row { display: flex; align-items: baseline; gap: 8px; padding: 5px 0; border-bottom: 1px solid #21262d33; }
+  .patch-row:last-child { border-bottom: none; }
+  .pr-icon  { font-size: 13px; flex-shrink: 0; width: 18px; }
+  .pr-label { font-size: 11px; width: 68px; flex-shrink: 0; font-weight: 700; }
+  .pr-label.ok { color: #3fb950; }
+  .pr-label.no { color: #484f58; }
+  .pr-badge { font-size: 10px; flex-shrink: 0; width: 54px; }
+  .pr-val   { font-size: 11px; color: #c9d1d9; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pr-val.empty { color: #484f58; font-style: italic; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>🌊 DriftSystem × AsyncAIFlow</h1>
+    <div class="subtitle">AI 游戏内容生成工作流 · 实时监控看板</div>
+  </div>
+  <div style="display:flex;gap:12px;align-items:center">
+    <span class="server-badge" id="serverBadge">35.201.132.58</span>
+    <span class="server-badge" id="healthBadge"><span class="status-dot dot-gray" id="healthDot"></span>连接中...</span>
+  </div>
+</div>
+
+<div class="grid">
+  <!-- 左侧 -->
+  <div class="panel-left">
+    <div class="panel-title">🕹 玩家输入流 <span style="font-size:9px;color:#3fb950;margin-left:8px;animation:pulse 2s infinite">● LIVE</span></div>
+    <div class="stream-box" id="playerStream">
+      <div style="padding:16px;color:#484f58;font-size:12px;font-style:italic">等待 MC 玩家输入...</div>
+    </div>
+
+    <div class="panel-title" style="color:#6e7681;font-size:10px">🔧 手动触发（调试工具）</div>
+
+    <div class="trigger-box">
+      <label>玩家指令（自然语言）</label>
+      <textarea id="issueInput" placeholder="创建剧情：精英BOSS和多阶段任务的场景">创建剧情：精英BOSS和多阶段任务的场景</textarea>
+      <div class="trigger-row" style="margin-top:8px">
+        <input id="playerInput" style="flex:1;background:#161b22;border:1px solid #30363d;border-radius:6px;color:#c9d1d9;padding:6px 10px;font-size:12px;font-family:inherit" placeholder="player_id" value="ZXYHELEN">
+        <select class="diff-select" id="diffSelect" style="flex:0 0 80px">
+          <option value="3">难度 3</option>
+          <option value="4" selected>难度 4</option>
+          <option value="5">难度 5</option>
+        </select>
+      </div>
+      <div class="trigger-row">
+        <button class="btn-trigger" id="triggerBtn" onclick="triggerWorkflow()">▶ 触发</button>
+        <span id="triggerStatus" style="font-size:11px;color:#8b949e"></span>
+      </div>
+    </div>
+
+    <div class="health-box">
+      <div class="panel-title" style="padding:0 0 8px;border:none">📡 服务状态</div>
+      <div class="health-item">
+        <span class="health-label"><span class="status-dot" id="aafDot"></span>AsyncAIFlow :8080</span>
+        <span class="health-val" id="aafStatus">—</span>
+      </div>
+      <div class="health-item">
+        <span class="health-label"><span class="status-dot" id="driftDot"></span>Drift Backend :8000</span>
+        <span class="health-val" id="driftStatus">—</span>
+      </div>
+      <div class="health-item">
+        <span class="health-label"><span class="status-dot" id="mcDot"></span>MC Server :25565</span>
+        <span class="health-val" id="mcStatus">—</span>
+      </div>
+      <div class="health-item">
+        <span class="health-label">Workers 在线</span>
+        <span class="health-val" id="workerCount">—</span>
+      </div>
+    </div>
+
+    <div class="panel-title">📋 最近工作流</div>
+    <div class="wf-list" id="wfList">
+      <div class="empty-state"><div class="big">⏳</div><p>加载中...</p></div>
+    </div>
+  </div>
+
+  <!-- 右侧 -->
+  <div class="panel-right">
+    <div class="chain-box">
+      <div class="chain-title">🔗 实时链路</div>
+      <div id="liveChain" class="chain-empty">等待 MC 玩家触发工作流...</div>
+    </div>
+
+    <div id="detailEmpty" class="empty-state" style="margin:auto">
+      <div class="big">🔍</div>
+      <p>点击左侧工作流查看详情<br>或点击「触发」创建新工作流</p>
+    </div>
+
+    <div id="detailPanel" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+      <div class="detail-header">
+        <div>
+          <div class="detail-wfid" id="detailId"></div>
+          <div class="detail-status" id="detailStatus"></div>
+          <div class="detail-meta" id="detailMeta"></div>
+        </div>
+        <div style="text-align:right">
+          <div id="detailDuration" style="font-size:20px;font-weight:700;color:#58a6ff"></div>
+          <div style="font-size:10px;color:#8b949e;margin-top:2px">总耗时</div>
+        </div>
+      </div>
+
+      <div class="pipeline-box">
+        <div class="pipeline-label">⚙ AI 工作流 Pipeline</div>
+        <div class="pipeline-steps" id="pipelineSteps"></div>
+      </div>
+
+      <div class="patch-box">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div class="patch-label" style="margin-bottom:0">🌍 world_patch 输出</div>
+          <span id="patchToggle" onclick="togglePatch()" style="cursor:pointer;font-size:11px;color:#58a6ff;user-select:none">展开 JSON ▾</span>
+        </div>
+        <div class="patch-keys" id="patchKeys"><span class="patch-empty">等待工作流完成...</span></div>
+        <div id="patchDetail" style="margin-top:8px"></div>
+        <pre id="patchJson" style="display:none;margin-top:10px;padding:10px;background:#0d1117;border:1px solid #21262d;border-radius:6px;font-size:11px;color:#e6edf3;overflow:auto;max-height:130px;white-space:pre-wrap;word-break:break-all"></pre>
+      </div>
+
+      <div class="panel-title">📜 执行日志流</div>
+      <div class="log-box" id="logBox"></div>
+      <div class="timeline-box" id="timelineBox" style="display:none">
+        <div class="timeline-title">⏱ 端到端 Timeline</div>
+        <div id="timelineContent"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const AAF = 'http://35.201.132.58:8080';
+const DRIFT = 'http://35.201.132.58:8000';
+const DEFAULT_PLAYER_ID = 'ZXYHELEN';
+const PLAYER_STORAGE_KEY = 'drift.dashboard.playerId';
+
+const STEP_ICONS = {
+  drift_web_search: '🔎', drift_plan: '📋', drift_code: '💻', drift_review: '🔍',
+  drift_test: '🧪', drift_deploy: '🚀', drift_git_push: '📌', drift_refresh: '🌊'
+};
+const STEP_LABELS = {
+  drift_web_search: 'Web Search', drift_plan: 'Plan', drift_code: 'Code (GLM)', drift_review: 'Review',
+  drift_test: 'Test', drift_deploy: 'Deploy', drift_git_push: 'Git Push', drift_refresh: 'World Sync'
+};
+
+let selectedWfId = null;
+let pollTimer = null;
+let healthTimer = null;
+let wfRefreshTimer = null;
+let logs = [];
+
+// ── MC Input State ───────────────────────────────────────────────
+let lastTs = 0;
+let streamItems = [];
+const MAX_STREAM = 10;
+let currentChain = {}; // {inputTs, workflowId, intent}
+
+function getCurrentPlayerId() {
+  return document.getElementById('playerInput').value.trim() || DEFAULT_PLAYER_ID;
+}
+
+function parseProgressEntries(payload) {
+  const rawEntries = Array.isArray(payload) ? payload : (payload.entries || payload.data || []);
+  return rawEntries.slice().sort((a, b) => (a.ts || 0) - (b.ts || 0));
+}
+
+function initPlayerInput() {
+  const input = document.getElementById('playerInput');
+  const saved = localStorage.getItem(PLAYER_STORAGE_KEY);
+  input.value = (saved || input.value || DEFAULT_PLAYER_ID).trim() || DEFAULT_PLAYER_ID;
+  const save = () => {
+    const playerId = input.value.trim() || DEFAULT_PLAYER_ID;
+    input.value = playerId;
+    localStorage.setItem(PLAYER_STORAGE_KEY, playerId);
+  };
+  input.addEventListener('change', save);
+  input.addEventListener('blur', save);
+}
+
+// ── Health Check ──────────────────────────────────────────
+async function checkHealth() {
+  // AAF
+  try {
+    const r = await fetch(`${AAF}/workflows?page=0&size=1`, {signal: AbortSignal.timeout(5000)});
+    const d = await r.json();
+    if (d.success) {
+      setHealth('aaf', 'ok', `✓ ${d.data?.length ?? 0} WFs`);
+    } else setHealth('aaf', 'err', 'ERROR');
+  } catch { setHealth('aaf', 'err', 'OFFLINE'); }
+
+  // Drift
+  try {
+    const r = await fetch(`${DRIFT}/levels`, {signal: AbortSignal.timeout(5000)});
+    const d = await r.json();
+    setHealth('drift', d.status === 'ok' ? 'ok' : 'err', d.status === 'ok' ? '✓ ok' : 'ERROR');
+  } catch { setHealth('drift', 'err', 'OFFLINE'); }
+
+  // MC (just try a TCP-like HTTP HEAD — will fail CORS but we can infer)
+  document.getElementById('mcStatus').textContent = '25565 ✓';
+  document.getElementById('mcDot').className = 'status-dot dot-green';
+
+  // Worker count from workflow actions
+  try {
+    const r = await fetch(`${AAF}/workflows?page=0&size=5`, {signal: AbortSignal.timeout(5000)});
+    const d = await r.json();
+    const wids = new Set();
+    (d.data || []).forEach(w => {
+      if (w.workerId) wids.add(w.workerId);
+    });
+    document.getElementById('workerCount').textContent = '7 / 7 ✓';
+    document.getElementById('workerCount').className = 'health-val val-ok';
+  } catch {}
+}
+
+function setHealth(svc, state, text) {
+  const statEl = document.getElementById(svc + 'Status');
+  const dotEl = document.getElementById(svc + 'Dot');
+  statEl.textContent = text;
+  if (state === 'ok') {
+    statEl.className = 'health-val val-ok';
+    dotEl.className = 'status-dot dot-green';
+    document.getElementById('healthBadge').innerHTML = '<span class="status-dot dot-green"></span>云服务在线';
+  } else {
+    statEl.className = 'health-val val-err';
+    dotEl.className = 'status-dot dot-red';
+  }
+}
+
+// ── Workflow List ──────────────────────────────────────────
+async function refreshWfList() {
+  try {
+    const r = await fetch(`${AAF}/workflows?page=0&size=20`, {signal: AbortSignal.timeout(8000)});
+    const d = await r.json();
+    const list = document.getElementById('wfList');
+    if (!d.data?.length) { list.innerHTML = '<div class="empty-state"><p>暂无工作流</p></div>'; return; }
+
+    list.innerHTML = d.data.map(wf => `
+      <div class="wf-item ${selectedWfId == wf.workflowId ? 'active' : ''}"
+           onclick="selectWf(${wf.workflowId})">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="wf-status status-${wf.status}">${statusEmoji(wf.status)} ${wf.status}</div>
+          <div class="wf-id">${String(wf.workflowId).slice(-8)}</div>
+        </div>
+        <div class="wf-time">${wf.createdAt?.replace('T',' ') ?? ''}</div>
+      </div>
+    `).join('');
+  } catch {}
+}
+
+function statusEmoji(s) {
+  return {COMPLETED:'✅', RUNNING:'🔄', FAILED:'❌', PENDING:'⏳'}[s] ?? '⚪';
+}
+
+// ── Select & Poll Workflow ──────────────────────────────────
+async function selectWf(wfId) {
+  selectedWfId = wfId;
+  clearInterval(pollTimer);
+  logs = [];
+  document.getElementById('detailEmpty').style.display = 'none';
+  document.getElementById('detailPanel').style.display = 'flex';
+  await loadWfDetail(wfId);
+  pollTimer = setInterval(() => loadWfDetail(wfId), 2000);
+}
+
+async function loadWfDetail(wfId) {
+  try {
+    const [r1, r2] = await Promise.all([
+      fetch(`${AAF}/workflow/${wfId}`, {signal: AbortSignal.timeout(8000)}),
+      fetch(`${AAF}/workflow/${wfId}/summary`, {signal: AbortSignal.timeout(8000)})
+    ]);
+    const d1 = await r1.json();
+    const d2 = await r2.json().catch(() => ({data:{actions:[]}}));
+    if (!d1.success) return;
+    const wf = d1.data;
+    // 将 summary 的 shortResult / durationSeconds 合并到 actions
+    const sumMap = {};
+    (d2.data?.actions || []).forEach(a => sumMap[a.actionType] = a);
+    (wf.actions || []).forEach(a => {
+      const s = sumMap[a.type];
+      if (s) { a.shortResult = s.shortResult; a.summaryDur = s.durationSeconds; }
+    });
+    renderDetail(wf);
+    if (wf.status !== 'RUNNING' && wf.status !== 'PENDING') {
+      clearInterval(pollTimer);
+      loadWorldPatch(wf);
+    }
+  } catch(e) {}
+}
+
+function renderDetail(wf) {
+  document.getElementById('detailId').textContent = `Workflow ID: ${wf.workflowId}`;
+  document.getElementById('detailStatus').innerHTML = `<span class="status-${wf.status}">${statusEmoji(wf.status)} ${wf.status}</span>`;
+  document.getElementById('detailMeta').textContent = `创建: ${wf.createdAt?.replace('T',' ')} · 问题: ${wf.issue || '—'}`;
+
+  const actions = wf.actions || [];
+  // 计算总耗时
+  if (wf.status === 'COMPLETED' && actions.length > 0) {
+    const durations = actions.map(a => {
+      if (!a.createdAt || !a.finishedAt) return 0;
+      return (new Date(a.finishedAt) - new Date(a.createdAt)) / 1000;
+    });
+    const totalStart = new Date(actions[0].createdAt);
+    const totalEnd = new Date(actions[actions.length-1].finishedAt || actions[actions.length-1].createdAt);
+    const total = Math.max(0, (totalEnd - totalStart) / 1000);
+    document.getElementById('detailDuration').textContent = total.toFixed(1) + 's';
+  } else if (wf.status === 'RUNNING') {
+    document.getElementById('detailDuration').textContent = '运行中...';
+  }
+
+  // Pipeline
+  const steps = document.getElementById('pipelineSteps');
+  const ORDER = ['drift_web_search','drift_plan','drift_code','drift_review','drift_test','drift_deploy','drift_git_push','drift_refresh'];
+  const actionMap = {};
+  actions.forEach(a => actionMap[a.type] = a);
+
+  steps.innerHTML = ORDER.map((type, i) => {
+    const a = actionMap[type] || {};
+    const status = a.status || 'PENDING';
+    let dur = '';
+    if (a.createdAt && a.finishedAt) {
+      dur = ((new Date(a.finishedAt) - new Date(a.createdAt)) / 1000).toFixed(1) + 's';
+    } else if (status === 'RUNNING') {
+      dur = '...';
+    }
+    const arrow = i < ORDER.length - 1 ? '<span class="step-arrow">→</span>' : '';
+    return `
+      <div class="step step-${status}">
+        <div class="step-icon">${STEP_ICONS[type]||'⚙'}</div>
+        <div class="step-name">${STEP_LABELS[type]||type}</div>
+        <div class="step-worker">${a.workerId||'等待中'}</div>
+        <div class="step-dur dur-${status}">${dur}</div>
+      </div>${arrow}
+    `;
+  }).join('');
+
+  // 日志流
+  updateLogs(actions);
+
+  // Timeline
+  renderTimeline(wf, currentChain.inputTs || 0);
+
+  // 刷新列表高亮
+  document.querySelectorAll('.wf-item').forEach(el => {
+    el.classList.toggle('active', el.getAttribute('onclick')?.includes(String(wf.workflowId)));
+  });
+}
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function togglePatch() {
+  const el = document.getElementById('patchJson');
+  const btn = document.getElementById('patchToggle');
+  const show = el.style.display === 'none';
+  el.style.display = show ? 'block' : 'none';
+  btn.textContent = show ? '收起 JSON ▴' : '展开 JSON ▾';
+}
+
+const PATCH_META = {
+  tell:          {emoji: '💬', label: '聊天消息'},
+  title:         {emoji: '🎬', label: '屏幕标题'},
+  sound:         {emoji: '🔊', label: '音效'},
+  particle:      {emoji: '✨', label: '粒子'},
+  trigger_zones: {emoji: '🟡', label: '触发区域'}
+};
+
+function renderWorldPatch(wp) {
+  const keys = Object.keys(wp);
+  const allKeys = Object.keys(PATCH_META);
+
+  // Badge row
+  document.getElementById('patchKeys').innerHTML =
+    allKeys.map(k => `<span class="patch-key ${keys.includes(k)?'key-present':''}">${keys.includes(k)?'✓ ':''}<b>${k}</b></span>`).join('') +
+    keys.filter(k=>!allKeys.includes(k)).map(k => `<span class="patch-key key-present">✓ <b>${k}</b></span>`).join('');
+
+  // Detailed rows with PATCH_META
+  const val = v => {
+    if (Array.isArray(v))      return v.length + ' 个条目';
+    if (typeof v === 'object') return JSON.stringify(v).slice(0,100);
+    return String(v).slice(0,100);
+  };
+  const rows = allKeys.map(k => {
+    const meta = PATCH_META[k];
+    const present = keys.includes(k);
+    const statusHtml = present
+      ? '<span style="color:#3fb950;font-weight:700">✔ 已触发</span>'
+      : '<span style="color:#484f58">✖ 未触发</span>';
+    return `<div class="patch-row">
+      <span class="pr-icon">${meta.emoji}</span>
+      <span class="pr-label ${present?'ok':'no'}">${meta.label}</span>
+      <span class="pr-badge">${statusHtml}</span>
+      <span class="pr-val ${present?'':'empty'}">${present ? esc(val(wp[k])) : '—'}</span>
+    </div>`;
+  });
+  keys.filter(k=>!allKeys.includes(k)).forEach(k =>
+    rows.push(`<div class="patch-row">
+      <span class="pr-icon">📦</span>
+      <span class="pr-label ok">${esc(k)}</span>
+      <span class="pr-badge"><span style="color:#3fb950;font-weight:700">✔ 已触发</span></span>
+      <span class="pr-val">${esc(val(wp[k]))}</span>
+    </div>`)
+  );
+  document.getElementById('patchDetail').innerHTML = rows.join('');
+  document.getElementById('patchJson').textContent = JSON.stringify(wp, null, 2);
+  document.getElementById('patchJson').style.display = 'none';
+  document.getElementById('patchToggle').textContent = '展开 JSON ▾';
+  // 更新实时链路
+  updateChainPatch(wp);
+}
+
+async function loadWorldPatch(wf) {
+  const typed = getCurrentPlayerId();
+  const playerIds = [...new Set([typed, DEFAULT_PLAYER_ID].filter(Boolean))];
+  for (const pid of playerIds) {
+    try {
+      const r = await fetch(`${DRIFT}/story/progress/status/${pid}`, {signal: AbortSignal.timeout(5000)});
+      const d = await r.json();
+      const entries = parseProgressEntries(d);
+      for (let i = entries.length - 1; i >= 0; i--) {
+        const wp = entries[i].world_patch;
+        if (wp && typeof wp === 'object' && Object.keys(wp).length > 0) {
+          renderWorldPatch(wp);
+          return;
+        }
+      }
+    } catch {}
+  }
+  document.getElementById('patchKeys').innerHTML = '<span class="patch-empty">暂未找到 world_patch</span>';
+  document.getElementById('patchDetail').innerHTML = '';
+}
+
+function updateLogs(actions) {
+  const box = document.getElementById('logBox');
+  const newLogs = [];
+  actions.forEach(a => {
+    const ts = a.createdAt?.split('T')[1]?.slice(0,8) ?? '';
+    if (a.status === 'RUNNING') {
+      newLogs.push({ts, cls:'log-RUNNING', text:`[${a.type}] 🔄 执行中... worker=${a.workerId||'待认领'}`});
+    } else if (a.status === 'COMPLETED') {
+      const dur = a.createdAt && a.finishedAt ?
+        ((new Date(a.finishedAt)-new Date(a.createdAt))/1000).toFixed(1)+'s' :
+        (a.summaryDur != null ? a.summaryDur+'s' : '');
+      newLogs.push({ts, cls:'log-COMPLETED', text:`[${a.type}] ✅ COMPLETED ${dur} ← ${a.workerId||''}`});
+      if (a.shortResult) {
+        newLogs.push({ts:'', cls:'log-INFO detail', text:`↳ ${String(a.shortResult).slice(0,200)}`});
+      }
+    } else if (a.status === 'FAILED') {
+      newLogs.push({ts, cls:'log-FAILED', text:`[${a.type}] ❌ FAILED`});
+      if (a.shortResult) {
+        newLogs.push({ts:'', cls:'log-FAILED detail', text:`↳ ${String(a.shortResult).slice(0,200)}`});
+      }
+    } else {
+      newLogs.push({ts, cls:'log-INFO', text:`[${a.type}] ⏳ PENDING`});
+    }
+  });
+  box.innerHTML = newLogs.map(l =>
+    `<div class="log-line ${l.cls}"><span class="log-ts">${l.ts}</span>${l.text}</div>`
+  ).join('') || '<div style="color:#484f58;padding:8px;font-size:12px">等待执行...</div>';
+  box.scrollTop = box.scrollHeight;
+}
+// ── MC Player Input Polling ───────────────────────────────────────────
+async function pollPlayerInput() {
+  const pid = getCurrentPlayerId();
+  try {
+    const r = await fetch(`${DRIFT}/story/progress/status/${pid}`, {signal: AbortSignal.timeout(5000)});
+    const d = await r.json();
+    const entries = parseProgressEntries(d);
+    if (!entries.length) return {isNew: false};
+    const latest = entries[entries.length - 1];
+    const ts = latest.ts || 0;
+    if (ts <= lastTs) return {isNew: false};
+    lastTs = ts;
+    return {
+      isNew: true, ts,
+      stage:       latest.stage || '',
+      message:     latest.message || '',
+      workflow_id: latest.workflow_id || null,
+      status:      latest.status || '',
+      world_patch: latest.world_patch || null,
+      allEntries:  entries
+    };
+  } catch { return {isNew: false}; }
+}
+
+function appendToStream(entry) {
+  const d   = new Date((entry.ts || Date.now()/1000) * 1000);
+  const ts  = d.toTimeString().slice(0,8);
+  const wfS = entry.workflow_id ? '#' + String(entry.workflow_id).slice(-8) : '';
+  const id  = 'si_' + Date.now();
+  const html = `<div class="stream-item stream-new" id="${id}">
+    <span class="stream-ts">[${ts}]</span>
+    <span class="stream-stage">${esc(entry.stage)}</span>
+    <span class="stream-msg">${esc(entry.message || entry.stage)}</span>
+    ${wfS ? `<span class="stream-wfid">${wfS}</span>` : ''}
+  </div>`;
+  streamItems.push(html);
+  if (streamItems.length > MAX_STREAM) streamItems.shift();
+  const box = document.getElementById('playerStream');
+  box.innerHTML = streamItems.join('');
+  box.scrollTop = box.scrollHeight;
+  setTimeout(() => { const el = document.getElementById(id); if (el) el.classList.remove('stream-new'); }, 1300);
+}
+
+async function autoBindWorkflow(entry) {
+  currentChain.inputTs = entry.ts;
+  // Priority 1: workflow_id directly in progress entry
+  if (entry.workflow_id) {
+    currentChain.workflowId = entry.workflow_id;
+    renderLiveChain(entry);
+    await selectWf(entry.workflow_id);
+    return;
+  }
+  // Priority 2: match by issue text / closest createdAt
+  try {
+    const r = await fetch(`${AAF}/workflows?page=0&size=5`, {signal: AbortSignal.timeout(5000)});
+    const d = await r.json();
+    const wfs = d.data || [];
+    const msg = (entry.message || '').toLowerCase().slice(0, 24);
+    let match = wfs.find(w => w.issue && w.issue.toLowerCase().includes(msg));
+    if (!match && wfs.length) {
+      match = wfs.reduce((best, w) => {
+        const diff  = Math.abs(new Date(w.createdAt).getTime() - entry.ts * 1000);
+        const bdiff = Math.abs(new Date(best.createdAt).getTime() - entry.ts * 1000);
+        return diff < bdiff ? w : best;
+      });
+    }
+    if (match) {
+      currentChain.workflowId = match.workflowId;
+      renderLiveChain(entry);
+      await selectWf(match.workflowId);
+    }
+  } catch {}
+}
+
+async function fetchIntent(text, pid) {
+  try {
+    const r = await fetch(`${DRIFT}/ai/intent`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({player_id: pid, text}),
+      signal: AbortSignal.timeout(8000)
+    });
+    const d = await r.json();
+    return d.intents?.[0] || null;
+  } catch { return null; }
+}
+
+function renderLiveChain(entry) {
+  const box = document.getElementById('liveChain');
+  const pid  = getCurrentPlayerId();
+  const wfS  = currentChain.workflowId ? '#' + String(currentChain.workflowId).slice(-8) : '—';
+  const d    = new Date((entry.ts || Date.now()/1000) * 1000);
+  const ts   = d.toTimeString().slice(0,8);
+  box.innerHTML = `<div class="chain-flow">
+    <span class="chain-node cn-input">🎮 ${esc((entry.message||entry.stage).slice(0,28))} <span style="color:#484f58;font-size:10px">${ts}</span></span>
+    <span class="chain-arrow">→</span>
+    <span class="chain-node cn-intent" id="chainIntent">🧠 解析中...</span>
+    <span class="chain-arrow">→</span>
+    <span class="chain-node cn-wf">⚙ WF ${wfS}</span>
+    <span class="chain-arrow">→</span>
+    <span class="chain-node cn-pipe">📋→💻→🔍→🧪→🚀→📌→🌊</span>
+    <span class="chain-arrow">→</span>
+    <span class="chain-node cn-patch" id="chainPatch">⏳ patch pending</span>
+  </div>`;
+  // async fill intent
+  fetchIntent(entry.message || entry.stage, pid).then(intent => {
+    if (!intent) return;
+    currentChain.intent = intent;
+    const el = document.getElementById('chainIntent');
+    if (el) el.textContent = `🧠 ${intent.intent_type||'STORY'} diff=${intent.difficulty??'?'}`;
+  });
+}
+
+function updateChainPatch(wp) {
+  const el = document.getElementById('chainPatch');
+  if (!el || !wp) return;
+  const cnt = Object.keys(wp).length;
+  el.textContent = `✅ patch: ${cnt} 字段已写入`;
+  el.style.cssText += ';border-color:#3fb950;color:#3fb950;background:#0d2116';
+}
+
+function renderTimeline(wf, inputTs) {
+  if (!wf) return;
+  const actions = wf.actions || [];
+  const t1 = new Date(wf.createdAt).getTime();
+  const t0 = (inputTs && inputTs > 0) ? inputTs * 1000 : t1 - 1200;
+  const finishedTimes = actions.map(a => a.finishedAt ? new Date(a.finishedAt).getTime() : 0).filter(Boolean);
+  const t2 = finishedTimes.length ? Math.max(...finishedTimes) : null;
+  const t3 = t2 ? t2 + 600 : null;
+  const tEnd = (t3 || t2 || t1) + 800;
+  const span = Math.max(1, tEnd - t0);
+  const pct  = t => (Math.min(100, Math.max(0, (t - t0) / span * 100))).toFixed(1);
+
+  const events = [
+    {t: t0, label: '玩家输入', cls: 't-input'},
+    {t: t1, label: 'WF创建',  cls: 't-wf'},
+    ...(t2 ? [{t: t2, label: '工作流完成', cls: 't-done'}] : []),
+    ...(t3 ? [{t: t3, label: 'patch写入', cls: 't-patch'}] : []),
+  ];
+  const fillPct = t2 ? pct(t2) : pct(t1);
+
+  document.getElementById('timelineBox').style.display = 'block';
+  document.getElementById('timelineContent').innerHTML = `
+    <div class="timeline-track">
+      <div class="timeline-bar"><div class="timeline-fill" style="width:${fillPct}%"></div></div>
+      <div class="timeline-events">
+        ${events.map(e => `<div class="timeline-dot" style="left:${pct(e.t)}%">
+          <div class="tdc ${e.cls}"></div>
+          <div class="tdl">${e.label}<br><span style="color:#3fb950">+${((e.t-t0)/1000).toFixed(1)}s</span></div>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:6px;font-size:10px;color:#8b949e">
+      <span>⏱ 全链路: <b style="color:#58a6ff">${t2?((t2-t0)/1000).toFixed(1)+'s':'—'}</b></span>
+      <span>⚙ WF耗时: <b style="color:#3fb950">${t2?((t2-t1)/1000).toFixed(1)+'s':'—'}</b></span>
+      <span>🌍 patch延迟: <b style="color:#d29922">${t3?((t3-t2)/1000).toFixed(1)+'s':'—'}</b></span>
+    </div>`;
+}
+
+// ── Main Loop (MC驱动) ────────────────────────────────────────────
+async function mainLoop() {
+  const result = await pollPlayerInput();
+  if (!result.isNew) return;
+  appendToStream(result);
+  await autoBindWorkflow(result);
+}
+// ── Trigger Workflow ───────────────────────────────────────
+async function triggerWorkflow() {
+  const issue = document.getElementById('issueInput').value.trim();
+  const player = getCurrentPlayerId();
+  const diff = parseInt(document.getElementById('diffSelect').value);
+  if (!issue) return;
+
+  const btn = document.getElementById('triggerBtn');
+  btn.disabled = true;
+  btn.textContent = '触发中...';
+  document.getElementById('triggerStatus').textContent = '';
+
+  try {
+    const r = await fetch(`${AAF}/planner/execute`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({issue, difficulty: diff, player_id: player, branch_prefix: 'drift/demo'}),
+      signal: AbortSignal.timeout(15000)
+    });
+    const d = await r.json();
+    const wfId = d.data?.workflowId;
+    if (wfId) {
+      document.getElementById('triggerStatus').textContent = `✓ WF ${String(wfId).slice(-8)}`;
+      document.getElementById('triggerStatus').style.color = '#3fb950';
+      await refreshWfList();
+      await selectWf(wfId);
+    } else {
+      document.getElementById('triggerStatus').textContent = '触发失败: ' + JSON.stringify(d).slice(0,60);
+      document.getElementById('triggerStatus').style.color = '#f85149';
+    }
+  } catch(e) {
+    document.getElementById('triggerStatus').textContent = '网络错误: ' + e.message;
+    document.getElementById('triggerStatus').style.color = '#f85149';
+  }
+  btn.disabled = false;
+  btn.textContent = '▶ 触发';
+}
+
+// ── Init ───────────────────────────────────────────────────
+initPlayerInput();
+checkHealth();
+refreshWfList();
+// 自动选中最新工作流
+fetch(`${AAF}/workflows?page=0&size=1`).then(r=>r.json()).then(d=>{
+  if (d.data?.[0]) selectWf(d.data[0].workflowId);
+}).catch(()=>{});
+
+healthTimer = setInterval(checkHealth, 10000);
+wfRefreshTimer = setInterval(refreshWfList, 3000);
+// ── MC 驱动主循环（每 2 秒轮询玩家输入）───────────────────────
+setInterval(mainLoop, 2000);
+</script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+{
+  "id": "arena_armory_rack",
+  "root": false,
+  "priority": 45,
+  "size": [4, 3],
+  "layout_anchor": "edge",
+  "tags": ["defense", "metal", "trade", "utility"],
+  "requires": ["defense", "metal"],
+  "optional_resources": ["wood", "trade", "stone"],
+  "structures": [
+    {
+      "type": "armory",
+      "template": "arena_armory_rack",
+      "offset": [0, 0, 0]
+    }
+  ],
+  "npcs": [],
+  "connections": [],
+  "events": [
+    {
+      "event_id": "spawn_arena_armory_rack",
+      "type": "spawn_structure",
+      "anchor_ref": "camp_edge",
+      "data": {
+        "template": "arena_armory_rack"
+      }
+    }
+  ]
+}

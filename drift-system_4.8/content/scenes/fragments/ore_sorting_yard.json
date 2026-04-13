@@ -1,0 +1,29 @@
+{
+  "id": "ore_sorting_yard",
+  "root": false,
+  "priority": 46,
+  "size": [5, 4],
+  "layout_anchor": "edge",
+  "tags": ["ore", "metal", "craft", "trade"],
+  "requires": ["ore"],
+  "optional_resources": ["metal", "trade", "utility"],
+  "structures": [
+    {
+      "type": "yard",
+      "template": "ore_sorting_yard",
+      "offset": [0, 0, 0]
+    }
+  ],
+  "npcs": [],
+  "connections": [],
+  "events": [
+    {
+      "event_id": "spawn_ore_sorting_yard",
+      "type": "spawn_structure",
+      "anchor_ref": "village_edge",
+      "data": {
+        "template": "ore_sorting_yard"
+      }
+    }
+  ]
+}

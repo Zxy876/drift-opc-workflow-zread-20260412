@@ -1,0 +1,29 @@
+{
+  "id": "temple_prayer_pillars",
+  "root": false,
+  "priority": 45,
+  "size": [4, 5],
+  "layout_anchor": "center",
+  "tags": ["memory", "stone", "light", "knowledge"],
+  "requires": ["memory"],
+  "optional_resources": ["stone", "story", "light"],
+  "structures": [
+    {
+      "type": "pillars",
+      "template": "temple_prayer_pillars",
+      "offset": [0, 0, 0]
+    }
+  ],
+  "npcs": [],
+  "connections": [],
+  "events": [
+    {
+      "event_id": "spawn_temple_prayer_pillars",
+      "type": "spawn_structure",
+      "anchor_ref": "village_center",
+      "data": {
+        "template": "temple_prayer_pillars"
+      }
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+# drift_deploy_worker has no LLM dependencies — only stdlib + asyncaiflow_client

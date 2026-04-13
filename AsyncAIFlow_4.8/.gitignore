@@ -1,0 +1,12 @@
+/target/
+/.idea/
+/.vscode/
+/.mvn/
+/.DS_Store
+/*.log
+/logs/
+/.env
+/.aiflow/
+/node_modules/
+__pycache__/
+*.pyc

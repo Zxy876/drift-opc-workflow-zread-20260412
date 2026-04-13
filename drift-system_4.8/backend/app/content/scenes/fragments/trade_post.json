@@ -1,0 +1,42 @@
+{
+  "id": "trade_post",
+  "root": true,
+  "priority": 62,
+  "size": [7, 5],
+  "layout_anchor": "edge",
+  "tags": ["trade", "npc", "wood", "travel"],
+  "requires": ["trade"],
+  "optional_resources": ["food", "wood", "water"],
+  "structures": [
+    {
+      "type": "trade_post",
+      "template": "trade_post_stall",
+      "offset": [0, 0, 0]
+    }
+  ],
+  "npcs": [
+    {
+      "id": "broker",
+      "role": "trader"
+    }
+  ],
+  "connections": ["trade_post_checkpoint_gate", "trade_post_caravan_camp", "market_stall", "merchant_cart", "food_stand", "road"],
+  "events": [
+    {
+      "event_id": "spawn_trade_post",
+      "type": "spawn_structure",
+      "anchor_ref": "village_center",
+      "data": {
+        "template": "trade_post_stall"
+      }
+    },
+    {
+      "event_id": "spawn_trade_post_merchant",
+      "type": "spawn_npc",
+      "anchor_ref": "village_center",
+      "data": {
+        "npc_template": "merchant"
+      }
+    }
+  ]
+}

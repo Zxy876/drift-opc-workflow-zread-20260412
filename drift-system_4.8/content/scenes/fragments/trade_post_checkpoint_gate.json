@@ -1,0 +1,29 @@
+{
+  "id": "trade_post_checkpoint_gate",
+  "root": false,
+  "priority": 46,
+  "size": [5, 4],
+  "layout_anchor": "edge",
+  "tags": ["trade", "travel", "defense", "wood"],
+  "requires": ["trade", "travel"],
+  "optional_resources": ["wood", "stone", "npc"],
+  "structures": [
+    {
+      "type": "checkpoint_gate",
+      "template": "trade_post_checkpoint_gate",
+      "offset": [0, 0, 0]
+    }
+  ],
+  "npcs": [],
+  "connections": [],
+  "events": [
+    {
+      "event_id": "spawn_trade_post_checkpoint_gate",
+      "type": "spawn_structure",
+      "anchor_ref": "village_center",
+      "data": {
+        "template": "trade_post_checkpoint_gate"
+      }
+    }
+  ]
+}

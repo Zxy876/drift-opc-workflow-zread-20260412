@@ -1,0 +1,227 @@
+version: "3.9"
+
+# ============================================================
+# Drift × AsyncAIFlow — 云端全服务部署
+# 用法: docker-compose -f docker-compose.cloud.yml up -d
+# ============================================================
+
+services:
+
+  # ── 基础设施 ──────────────────────────────────────────────
+  mysql:
+    image: mysql:8.4
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: asyncaiflow
+      MYSQL_ROOT_HOST: "%"
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+
+  redis:
+    image: redis:7.4-alpine
+    restart: always
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ── AsyncAIFlow 运行时 :8080 ───────────────────────────────
+  asyncaiflow:
+    image: eclipse-temurin:21-jre-alpine
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./asyncaiflow.jar:/app/asyncaiflow.jar
+    working_dir: /app
+    command: >
+      java -Xms512m -Xmx1g
+      -Dspring.datasource.url=jdbc:mysql://mysql:3306/asyncaiflow?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8
+      -Dspring.datasource.username=root
+      -Dspring.datasource.password=root
+      -Dspring.data.redis.host=redis
+      -Dspring.data.redis.port=6379
+      -jar asyncaiflow.jar
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/workflows?page=0&size=1 | grep -q success || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 12
+      start_period: 60s
+
+  # ── Drift Backend :8000 ───────────────────────────────────
+  drift-backend:
+    image: python:3.11-slim
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./drift-backend:/app
+    working_dir: /app/backend
+    environment:
+      - DRIFT_TARGET_RUNTIME=godot
+      - DRIFT_SCENE_REQUIRE_SEED_RESOURCES=0
+      - DRIFT_SCENE_FALLBACK_POLICY=legacy_seed_retry
+    command: >
+      bash -c "pip install -q fastapi uvicorn pydantic requests python-dotenv httpx openai Pillow &&
+               uvicorn app.main:app --host 0.0.0.0 --port 8000 --log-level warning"
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/levels')\""]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 45s
+
+  # ── drift_plan_worker ─────────────────────────────────────
+  drift-plan-worker:
+    image: python:3.11-slim
+    restart: always
+    depends_on:
+      asyncaiflow:
+        condition: service_healthy
+    volumes:
+      - ./workers/drift_plan_worker:/app
+    working_dir: /app
+    environment:
+      - ASYNCAIFLOW_SERVER_BASE_URL=http://asyncaiflow:8080
+      - ASYNCAIFLOW_WORKER_ID=drift-plan-worker-py
+      - ASYNCAIFLOW_CAPABILITIES=drift_plan
+      - ASYNCAIFLOW_POLL_INTERVAL_SECONDS=1.0
+    command: >
+      bash -c "pip install -q requests && python worker.py"
+
+  # ── drift_code_worker ─────────────────────────────────────
+  drift-code-worker:
+    image: python:3.11-slim
+    restart: always
+    depends_on:
+      asyncaiflow:
+        condition: service_healthy
+    volumes:
+      - ./workers/drift_code_worker:/app
+    working_dir: /app
+    environment:
+      - ASYNCAIFLOW_SERVER_BASE_URL=http://asyncaiflow:8080
+      - ASYNCAIFLOW_WORKER_ID=drift-code-worker-py
+      - ASYNCAIFLOW_CAPABILITIES=drift_code
+      - ASYNCAIFLOW_POLL_INTERVAL_SECONDS=1.0
+      # 不设置 OPENAI_API_KEY → 自动走 demo stub
+    command: >
+      bash -c "pip install -q requests && python worker.py"
+
+  # ── drift_review_worker ───────────────────────────────────
+  drift-review-worker:
+    image: python:3.11-slim
+    restart: always
+    depends_on:
+      asyncaiflow:
+        condition: service_healthy
+    volumes:
+      - ./workers/drift_review_worker:/app
+    working_dir: /app
+    environment:
+      - ASYNCAIFLOW_SERVER_BASE_URL=http://asyncaiflow:8080
+      - ASYNCAIFLOW_WORKER_ID=drift-review-worker-py
+      - ASYNCAIFLOW_CAPABILITIES=drift_review
+      - ASYNCAIFLOW_POLL_INTERVAL_SECONDS=1.0
+    command: >
+      bash -c "pip install -q requests && python worker.py"
+
+  # ── drift_test_worker ─────────────────────────────────────
+  drift-test-worker:
+    image: python:3.11-slim
+    restart: always
+    depends_on:
+      asyncaiflow:
+        condition: service_healthy
+    volumes:
+      - ./workers/drift_test_worker:/app
+    working_dir: /app
+    environment:
+      - ASYNCAIFLOW_SERVER_BASE_URL=http://asyncaiflow:8080
+      - ASYNCAIFLOW_WORKER_ID=drift-test-worker-py
+      - ASYNCAIFLOW_CAPABILITIES=drift_test
+      - ASYNCAIFLOW_POLL_INTERVAL_SECONDS=1.0
+    command: >
+      bash -c "pip install -q requests && python worker.py"
+
+  # ── drift_deploy_worker ───────────────────────────────────
+  drift-deploy-worker:
+    image: python:3.11-slim
+    restart: always
+    depends_on:
+      asyncaiflow:
+        condition: service_healthy
+    volumes:
+      - ./workers/drift_deploy_worker:/app
+    working_dir: /app
+    environment:
+      - ASYNCAIFLOW_SERVER_BASE_URL=http://asyncaiflow:8080
+      - ASYNCAIFLOW_WORKER_ID=drift-deploy-worker-py
+      - ASYNCAIFLOW_CAPABILITIES=drift_deploy
+      - ASYNCAIFLOW_POLL_INTERVAL_SECONDS=1.0
+      - DRIFT_REPO_PATH=/app
+    command: >
+      bash -c "pip install -q requests && python worker.py"
+
+  # ── drift_git_push_worker ─────────────────────────────────
+  drift-git-push-worker:
+    image: python:3.11-slim
+    restart: always
+    depends_on:
+      asyncaiflow:
+        condition: service_healthy
+    volumes:
+      - ./workers/drift_git_push_worker:/app
+    working_dir: /app
+    environment:
+      - ASYNCAIFLOW_SERVER_BASE_URL=http://asyncaiflow:8080
+      - ASYNCAIFLOW_WORKER_ID=drift-git-push-worker-py
+      - ASYNCAIFLOW_CAPABILITIES=drift_git_push
+      - ASYNCAIFLOW_POLL_INTERVAL_SECONDS=1.0
+    command: >
+      bash -c "pip install -q requests && python worker.py"
+
+  # ── drift_refresh_worker ──────────────────────────────────
+  drift-refresh-worker:
+    image: python:3.11-slim
+    restart: always
+    depends_on:
+      asyncaiflow:
+        condition: service_healthy
+      drift-backend:
+        condition: service_healthy
+    volumes:
+      - ./workers/drift_refresh_worker:/app
+    working_dir: /app
+    environment:
+      - ASYNCAIFLOW_SERVER_BASE_URL=http://asyncaiflow:8080
+      - ASYNCAIFLOW_WORKER_ID=drift-refresh-worker-py
+      - ASYNCAIFLOW_CAPABILITIES=drift_refresh
+      - ASYNCAIFLOW_POLL_INTERVAL_SECONDS=2.0
+      - DRIFT_BACKEND_URL=http://drift-backend:8000
+    command: >
+      bash -c "pip install -q requests && python worker.py"
+
+volumes:
+  mysql-data:
+  redis-data:
